@@ -1,0 +1,29 @@
+# Build outputs
+build*/
+*.o
+*.obj
+*.a
+*.lib
+*.dll
+*.exe
+*.so
+*.dylib
+*.pdb
+*.ilk
+*.exp
+*.log
+
+# Qt Creator
+.qtcreator/
+
+# Debug outputs
+bloom_debug.log
+bloom_qml_errors.log
+debug_*.txt
+debug_*.log
+
+# OS / misc
+nul
+Thumbs.db
+.DS_Store
+
