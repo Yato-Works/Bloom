@@ -77,7 +77,6 @@ Item {
                     TextField {
                         id: pathField
                         Layout.fillWidth: true
-                        placeholderText: "壁紙のパス..."
                         color: Theme.text
                         font.pixelSize: Theme.fontSM
                         background: Rectangle {
@@ -110,7 +109,7 @@ Item {
                     }
 
                     Text {
-                        text: "適用でデスクトップ背景を変更"
+                        text: "適用でチE��クトップ背景を変更"
                         color: Theme.onSurfaceMuted
                         font.pixelSize: Theme.fontXS
                     }
@@ -233,7 +232,6 @@ Item {
                             Layout.fillWidth: true
                             model: workspaceService.workspaceNames
                             editable: true
-                            placeholderText: "Workspace name..."
                             flat: true
                             background: Rectangle {
                                 radius: Theme.radiusSmall
