@@ -25,6 +25,7 @@ qt_add_executable(Bloom
     src/services/WeatherService.cpp
     src/services/ThemeBridge.cpp
     src/services/WallpaperService.cpp
+    src/services/WorkspaceService.cpp
 )
 
 qt_add_qml_module(Bloom

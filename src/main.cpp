@@ -61,6 +61,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("config"), services.configService());
     engine.rootContext()->setContextProperty(QStringLiteral("wallpaperService"), services.wallpaperService());
     engine.rootContext()->setContextProperty(QStringLiteral("globalShortcuts"), services.globalShortcutService());
+    engine.rootContext()->setContextProperty(QStringLiteral("workspaceService"), services.workspaceService());
 
     static ThemeBridge themeBridge;
     engine.rootContext()->setContextProperty(QStringLiteral("Theme"), &themeBridge);

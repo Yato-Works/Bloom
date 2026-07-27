@@ -10,6 +10,7 @@
 #include "SystemInfoService.h"
 #include "WallpaperService.h"
 #include "GlobalShortcutService.h"
+#include "WorkspaceService.h"
 
 
 class ServiceManager final : public QObject
@@ -32,6 +33,7 @@ public:
     [[nodiscard]] MusicControlService *musicControlService() noexcept;
     [[nodiscard]] ConfigService *configService() noexcept;
     [[nodiscard]] GlobalShortcutService *globalShortcutService() noexcept;
+    [[nodiscard]] WorkspaceService *workspaceService() noexcept;
 
 
 private:
@@ -44,4 +46,5 @@ private:
     SystemInfoService m_systemInfoService;
     MusicControlService m_musicControlService;
     ConfigService m_configService;
+    WorkspaceService m_workspaceService;
 };

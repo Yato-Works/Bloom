@@ -13,7 +13,7 @@ ServiceManager::ServiceManager(QObject *parent)
     , m_systemInfoService(this)
     , m_configService(this)
     , m_wallpaperService(this)
-
+    , m_workspaceService(this)
 {
 }
 
@@ -46,4 +46,5 @@ WallpaperService *ServiceManager::wallpaperService() noexcept { return &m_wallpa
 MusicControlService *ServiceManager::musicControlService() noexcept { return &m_musicControlService; }
 ConfigService *ServiceManager::configService() noexcept { return &m_configService; }
 GlobalShortcutService *ServiceManager::globalShortcutService() noexcept { return &m_globalShortcuts; }
+WorkspaceService *ServiceManager::workspaceService() noexcept { return &m_workspaceService; }
 

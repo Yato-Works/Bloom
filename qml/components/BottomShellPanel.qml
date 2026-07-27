@@ -200,7 +200,7 @@ Item {
                 }
             }
 
-            // Workspace placeholder (next integration)
+            // Workspace Save / Restore
             GlassPanel {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -223,35 +223,106 @@ Item {
                             font.weight: Font.DemiBold
                         }
                         Item { Layout.fillWidth: true }
-                        Rectangle {
-                            width: soonLabel.width + 12
-                            height: 20
-                            radius: Theme.radiusFull
-                            color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.12)
-                            Text {
-                                id: soonLabel
-                                anchors.centerIn: parent
-                                text: "soon"
-                                color: Theme.primary
-                                font.pixelSize: 10
-                                font.weight: Font.DemiBold
+                    }
+
+                    RowLayout {
+                        spacing: Theme.spacingSM
+
+                        ComboBox {
+                            id: workspaceCombo
+                            Layout.fillWidth: true
+                            model: workspaceService.workspaceNames
+                            editable: true
+                            placeholderText: "Workspace name..."
+                            flat: true
+                            background: Rectangle {
+                                radius: Theme.radiusSmall
+                                color: Qt.rgba(1, 1, 1, 0.04)
+                                border.width: 1
+                                border.color: Qt.rgba(1, 1, 1, 0.06)
                             }
+                            contentItem: Text {
+                                text: workspaceCombo.displayText
+                                color: Theme.text
+                                font.pixelSize: Theme.fontSM
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                        }
+
+                        Button {
+                            id: saveButton
+                            text: "Save"
+                            flat: true
+                            enabled: workspaceCombo.displayText.trim().length > 0
+                            contentItem: Text {
+                                text: "Save"
+                                color: Theme.onPrimary
+                                font.pixelSize: Theme.fontSM
+                                font.weight: Font.DemiBold
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+                            background: Rectangle {
+                                implicitWidth: 72
+                                implicitHeight: 32
+                                radius: Theme.radiusFull
+                                color: saveButton.hovered ? Qt.lighter(Theme.primary, 1.1) : Theme.primary
+                            }
+                            onClicked: workspaceService.saveWorkspace(workspaceCombo.displayText.trim())
+                        }
+
+                        Button {
+                            id: restoreButton
+                            text: "Restore"
+                            enabled: workspaceCombo.currentIndex >= 0
+                            flat: true
+                            contentItem: Text {
+                                text: "Restore"
+                                color: Theme.onPrimary
+                                font.pixelSize: Theme.fontSM
+                                font.weight: Font.DemiBold
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+                            background: Rectangle {
+                                implicitWidth: 80
+                                implicitHeight: 32
+                                radius: Theme.radiusFull
+                                color: restoreButton.hovered ? Qt.lighter(Theme.primary, 1.1) : Theme.primary
+                            }
+                            onClicked: workspaceService.restoreWorkspace(workspaceCombo.currentText)
+                        }
+
+                        Button {
+                            text: "Delete"
+                            enabled: workspaceCombo.currentIndex >= 0
+                            flat: true
+                            contentItem: Text {
+                                text: "Delete"
+                                color: Theme.onPrimary
+                                font.pixelSize: Theme.fontSM
+                                font.weight: Font.DemiBold
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+                            background: Rectangle {
+                                implicitWidth: 72
+                                implicitHeight: 32
+                                radius: Theme.radiusFull
+                                color: deleteMouse.containsMouse ? "#ff6b6b" : Qt.rgba(1, 1, 1, 0.08)
+                                border.width: 1
+                                border.color: Qt.rgba(1, 1, 1, 0.12)
+                            }
+                            MouseArea {
+                                id: deleteMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                            }
+                            onClicked: workspaceService.deleteWorkspace(workspaceCombo.currentText)
                         }
                     }
 
                     Text {
                         Layout.fillWidth: true
-                        text: "Save your workspace.\nRestore your flow."
+                        text: workspaceService.statusText
                         color: Theme.textMuted
-                        font.pixelSize: Theme.fontSM
-                        wrapMode: Text.WordWrap
-                        lineHeight: 1.25
-                    }
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: "次のステップで Save / Restore をここに統合します。通知ウィジェットも上下の端から拡張予定。"
-                        color: Theme.onSurfaceMuted
                         font.pixelSize: Theme.fontXS
                         wrapMode: Text.WordWrap
                     }
