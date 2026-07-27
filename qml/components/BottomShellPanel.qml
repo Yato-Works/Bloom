@@ -7,13 +7,13 @@ Item {
     id: root
     property bool open: false
     property bool panelHovered: false
+    property int currentTab: 0
 
     readonly property int panelHeight: 220
 
     height: panelHeight
     opacity: open ? 1 : 0
 
-    // Slide from below (transform avoids fighting anchors)
     transform: Translate {
         y: root.open ? 0 : root.panelHeight + 28
         Behavior on y {
@@ -27,9 +27,10 @@ Item {
         NumberAnimation { duration: Theme.durationFast }
     }
 
-    // β: keep open while pointer is over the panel
     MouseArea {
         anchors.fill: parent
+        anchors.margins: -24
+        z: 999
         hoverEnabled: true
         acceptedButtons: Qt.NoButton
         onContainsMouseChanged: root.panelHovered = containsMouse
@@ -44,288 +45,202 @@ Item {
         tint: Theme.surface
         showShadow: true
 
-        RowLayout {
+        ColumnLayout {
             anchors.fill: parent
             anchors.margins: Theme.paddingLG
-            spacing: Theme.spacingMD
+            spacing: Theme.spacingSM
 
-            // Wallpaper card
-            GlassPanel {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.preferredWidth: 1
-                tint: Theme.surfaceContainer
-                showShadow: false
-
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: Theme.spacingMD
-                    spacing: Theme.spacingSM
-
-                    RowLayout {
-                        spacing: Theme.spacingXS
-                        Text { text: "🖼"; color: Theme.primary; font.pixelSize: 16 }
-                        Text {
-                            text: "Wallpaper"
-                            color: Theme.text
-                            font.pixelSize: Theme.fontMD
-                            font.weight: Font.DemiBold
-                        }
-                        Item { Layout.fillWidth: true }
-                    }
-
-                    TextField {
-                        id: pathField
-                        Layout.fillWidth: true
-                        color: Theme.text
-                        font.pixelSize: Theme.fontSM
-                        background: Rectangle {
-                            radius: Theme.radiusSmall
-                            color: Qt.rgba(1, 1, 1, 0.04)
-                            border.width: 1
-                            border.color: Qt.rgba(1, 1, 1, 0.06)
-                        }
-                        onAccepted: wallpaperService.setWallpaper(text)
-                    }
-
-                    Button {
-                        text: "適用"
-                        Layout.alignment: Qt.AlignRight
-                        flat: true
-                        contentItem: Text {
-                            text: "適 用"
-                            color: Theme.onPrimary
-                            font.pixelSize: Theme.fontSM
-                            font.weight: Font.DemiBold
-                            horizontalAlignment: Text.AlignHCenter
-                        }
-                        background: Rectangle {
-                            radius: Theme.radiusFull
-                            color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.85)
-                            implicitWidth: 72
-                            implicitHeight: 30
-                        }
-                        onClicked: wallpaperService.setWallpaper(pathField.text)
-                    }
-
-                    Text {
-                        text: "適用でチE��クトップ背景を変更"
-                        color: Theme.onSurfaceMuted
-                        font.pixelSize: Theme.fontXS
-                    }
-                    Item { Layout.fillHeight: true }
+            RowLayout {
+                spacing: Theme.spacingSM
+                Button {
+                    text: "Background"
+                    checked: root.currentTab === 0
+                    onClicked: root.currentTab = 0
+                }
+                Button {
+                    text: "Workspaces"
+                    checked: root.currentTab === 1
+                    onClicked: root.currentTab = 1
+                }
+                Item { Layout.fillWidth: true }
+                Text {
+                    text: root.currentTab === 0 ? (wallpaperService.wallpaperNames.length + " items") : (workspaceService.workspaceNames.length + " workspaces")
+                    color: Theme.textMuted
+                    font.pixelSize: Theme.fontXS
                 }
             }
 
-            // Music card
-            GlassPanel {
+            Rectangle {
+                Layout.fillWidth: true
+                height: 1
+                color: Qt.rgba(1, 1, 1, 0.06)
+            }
+
+            StackLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.preferredWidth: 1
-                tint: Theme.surfaceContainer
-                showShadow: false
+                currentIndex: root.currentTab
 
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: Theme.spacingMD
-                    spacing: Theme.spacingSM
-
-                    RowLayout {
-                        spacing: Theme.spacingXS
-                        Text { text: "♫"; color: Theme.accent; font.pixelSize: 16 }
-                        Text {
-                            text: "Music"
-                            color: Theme.text
-                            font.pixelSize: Theme.fontMD
-                            font.weight: Font.DemiBold
+                Item {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Flickable {
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        contentWidth: bgRow.implicitWidth
+                        contentHeight: bgRow.implicitHeight
+                        clip: true
+                        ScrollBar.horizontal: ScrollBar {
+                            policy: ScrollBar.AsNeeded
+                            visible: false
                         }
-                        Item { Layout.fillWidth: true }
+                        RowLayout {
+                            id: bgRow
+                            spacing: Theme.spacingMD
+                            Repeater {
+                                model: wallpaperService.wallpaperNames
+                                Rectangle {
+                                    Layout.alignment: Qt.AlignVCenter
+                                    width: 140
+                                    height: 110
+                                    radius: Theme.radiusMedium
+                                    color: Theme.surfaceContainer
+                                    border.width: wallpaperService.currentIndex === index ? 2 : 0
+                                    border.color: Theme.primary
+                                    Image {
+                                        anchors.fill: parent
+                                        anchors.margins: 6
+                                        source: "file:///" + wallpaperService.wallpaperPaths[index]
+                                        fillMode: Image.PreserveAspectCrop
+                                        cache: true
+                                        asynchronous: true
+                                    }
+                                    Behavior on border.width {
+                                        NumberAnimation { duration: 120 }
+                                    }
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: wallpaperService.setWallpaperByIndex(index)
+                                    }
+                                }
+                            }
+                        }
                     }
-
                     Text {
-                        text: "Night Drive"
-                        color: Theme.text
-                        font.pixelSize: Theme.fontLG
-                        font.weight: Font.DemiBold
-                    }
-                    Text {
-                        text: "WavePoint"
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: wallpaperService.wallpaperNames.length === 0
+                        text: "壁紙画像を\\nC:\\Users\\<user>\\AppData\\Roaming\\Bloom\\wallpapers に入れてください"
                         color: Theme.textMuted
                         font.pixelSize: Theme.fontSM
+                        horizontalAlignment: Text.AlignHCenter
                     }
-
-                    RowLayout {
-                        Layout.alignment: Qt.AlignHCenter
-                        spacing: 16
-
-                        Rectangle {
-                            width: 36; height: 36; radius: 18
-                            color: prevMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
-                            Text { anchors.centerIn: parent; text: "⏮"; color: Theme.text; font.pixelSize: 14 }
-                            MouseArea {
-                                id: prevMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: musicControl.previous()
-                            }
-                        }
-                        Rectangle {
-                            width: 44; height: 44; radius: 22
-                            color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.18)
-                            border.width: 1
-                            border.color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.25)
-                            Text { anchors.centerIn: parent; text: "▶"; color: Theme.accent; font.pixelSize: 16 }
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: musicControl.togglePlayPause()
-                            }
-                        }
-                        Rectangle {
-                            width: 36; height: 36; radius: 18
-                            color: nextMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
-                            Text { anchors.centerIn: parent; text: "⏭"; color: Theme.text; font.pixelSize: 14 }
-                            MouseArea {
-                                id: nextMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: musicControl.next()
-                            }
-                        }
-                    }
-                    Item { Layout.fillHeight: true }
                 }
-            }
 
-            // Workspace Save / Restore
-            GlassPanel {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.preferredWidth: 1
-                tint: Theme.surfaceContainer
-                showShadow: false
-
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: Theme.spacingMD
-                    spacing: Theme.spacingSM
-
-                    RowLayout {
-                        spacing: Theme.spacingXS
-                        Text { text: "🗂"; color: Theme.primary; font.pixelSize: 16 }
-                        Text {
-                            text: "Workspace"
-                            color: Theme.text
-                            font.pixelSize: Theme.fontMD
-                            font.weight: Font.DemiBold
-                        }
-                        Item { Layout.fillWidth: true }
-                    }
-
-                    RowLayout {
+                Item {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    ColumnLayout {
+                        anchors.fill: parent
                         spacing: Theme.spacingSM
-
-                        ComboBox {
-                            id: workspaceCombo
-                            Layout.fillWidth: true
-                            model: workspaceService.workspaceNames
-                            editable: true
-                            flat: true
-                            background: Rectangle {
-                                radius: Theme.radiusSmall
-                                color: Qt.rgba(1, 1, 1, 0.04)
-                                border.width: 1
-                                border.color: Qt.rgba(1, 1, 1, 0.06)
+                        RowLayout {
+                            spacing: Theme.spacingSM
+                            ComboBox {
+                                id: workspaceCombo
+                                Layout.fillWidth: true
+                                model: workspaceService.workspaceNames
+                                editable: true
+                                flat: true
+                                background: Rectangle {
+                                    radius: Theme.radiusSmall
+                                    color: Qt.rgba(1, 1, 1, 0.04)
+                                    border.width: 1
+                                    border.color: Qt.rgba(1, 1, 1, 0.06)
+                                }
+                                contentItem: Text {
+                                    text: workspaceCombo.displayText
+                                    color: Theme.text
+                                    font.pixelSize: Theme.fontSM
+                                    verticalAlignment: Text.AlignVCenter
+                                }
                             }
-                            contentItem: Text {
-                                text: workspaceCombo.displayText
-                                color: Theme.text
-                                font.pixelSize: Theme.fontSM
-                                verticalAlignment: Text.AlignVCenter
-                            }
-                        }
-
-                        Button {
-                            id: saveButton
-                            text: "Save"
-                            flat: true
-                            enabled: workspaceCombo.displayText.trim().length > 0
-                            contentItem: Text {
+                            Button {
                                 text: "Save"
-                                color: Theme.onPrimary
-                                font.pixelSize: Theme.fontSM
-                                font.weight: Font.DemiBold
-                                horizontalAlignment: Text.AlignHCenter
+                                flat: true
+                                enabled: workspaceCombo.displayText.trim().length > 0
+                                contentItem: Text {
+                                    text: "Save"
+                                    color: Theme.onPrimary
+                                    font.pixelSize: Theme.fontSM
+                                    font.weight: Font.DemiBold
+                                    horizontalAlignment: Text.AlignHCenter
+                                }
+                                background: Rectangle {
+                                    implicitWidth: 72
+                                    implicitHeight: 32
+                                    radius: Theme.radiusFull
+                                    color: saveButton.hovered ? Qt.lighter(Theme.primary, 1.1) : Theme.primary
+                                }
+                                onClicked: workspaceService.saveWorkspace(workspaceCombo.displayText.trim())
                             }
-                            background: Rectangle {
-                                implicitWidth: 72
-                                implicitHeight: 32
-                                radius: Theme.radiusFull
-                                color: saveButton.hovered ? Qt.lighter(Theme.primary, 1.1) : Theme.primary
-                            }
-                            onClicked: workspaceService.saveWorkspace(workspaceCombo.displayText.trim())
-                        }
-
-                        Button {
-                            id: restoreButton
-                            text: "Restore"
-                            enabled: workspaceCombo.currentIndex >= 0
-                            flat: true
-                            contentItem: Text {
+                            Button {
                                 text: "Restore"
-                                color: Theme.onPrimary
-                                font.pixelSize: Theme.fontSM
-                                font.weight: Font.DemiBold
-                                horizontalAlignment: Text.AlignHCenter
+                                enabled: workspaceCombo.currentIndex >= 0
+                                flat: true
+                                contentItem: Text {
+                                    text: "Restore"
+                                    color: Theme.onPrimary
+                                    font.pixelSize: Theme.fontSM
+                                    font.weight: Font.DemiBold
+                                    horizontalAlignment: Text.AlignHCenter
+                                }
+                                background: Rectangle {
+                                    implicitWidth: 80
+                                    implicitHeight: 32
+                                    radius: Theme.radiusFull
+                                    color: restoreButton.hovered ? Qt.lighter(Theme.primary, 1.1) : Theme.primary
+                                }
+                                onClicked: workspaceService.restoreWorkspace(workspaceCombo.currentText)
                             }
-                            background: Rectangle {
-                                implicitWidth: 80
-                                implicitHeight: 32
-                                radius: Theme.radiusFull
-                                color: restoreButton.hovered ? Qt.lighter(Theme.primary, 1.1) : Theme.primary
-                            }
-                            onClicked: workspaceService.restoreWorkspace(workspaceCombo.currentText)
-                        }
-
-                        Button {
-                            text: "Delete"
-                            enabled: workspaceCombo.currentIndex >= 0
-                            flat: true
-                            contentItem: Text {
+                            Button {
                                 text: "Delete"
-                                color: Theme.onPrimary
-                                font.pixelSize: Theme.fontSM
-                                font.weight: Font.DemiBold
-                                horizontalAlignment: Text.AlignHCenter
+                                enabled: workspaceCombo.currentIndex >= 0
+                                flat: true
+                                contentItem: Text {
+                                    text: "Delete"
+                                    color: Theme.onPrimary
+                                    font.pixelSize: Theme.fontSM
+                                    font.weight: Font.DemiBold
+                                    horizontalAlignment: Text.AlignHCenter
+                                }
+                                background: Rectangle {
+                                    implicitWidth: 72
+                                    implicitHeight: 32
+                                    radius: Theme.radiusFull
+                                    color: deleteHover.containsMouse ? "#ff6b6b" : Qt.rgba(1, 1, 1, 0.08)
+                                    border.width: 1
+                                    border.color: Qt.rgba(1, 1, 1, 0.12)
+                                }
+                                MouseArea {
+                                    id: deleteHover
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    acceptedButtons: Qt.NoButton
+                                }
+                                onClicked: workspaceService.deleteWorkspace(workspaceCombo.currentText)
                             }
-                            background: Rectangle {
-                                implicitWidth: 72
-                                implicitHeight: 32
-                                radius: Theme.radiusFull
-                                color: deleteMouse.containsMouse ? "#ff6b6b" : Qt.rgba(1, 1, 1, 0.08)
-                                border.width: 1
-                                border.color: Qt.rgba(1, 1, 1, 0.12)
-                            }
-                            MouseArea {
-                                id: deleteMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                            }
-                            onClicked: workspaceService.deleteWorkspace(workspaceCombo.currentText)
                         }
+                        Text {
+                            Layout.fillWidth: true
+                            text: workspaceService.statusText
+                            color: Theme.textMuted
+                            font.pixelSize: Theme.fontXS
+                            wrapMode: Text.WordWrap
+                        }
+                        Item { Layout.fillHeight: true }
                     }
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: workspaceService.statusText
-                        color: Theme.textMuted
-                        font.pixelSize: Theme.fontXS
-                        wrapMode: Text.WordWrap
-                    }
-
-                    Item { Layout.fillHeight: true }
                 }
             }
         }
