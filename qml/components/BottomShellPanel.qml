@@ -9,13 +9,12 @@ Item {
     property bool panelHovered: false
     property int currentTab: 0
 
-    readonly property int panelHeight: 220
-
+    readonly property int panelHeight: 240
     height: panelHeight
     opacity: open ? 1 : 0
 
     transform: Translate {
-        y: root.open ? 0 : root.panelHeight + 28
+        y: root.open ? 0 : root.panelHeight + 24
         Behavior on y {
             NumberAnimation {
                 duration: Theme.durationDefault
@@ -29,7 +28,7 @@ Item {
 
     MouseArea {
         anchors.fill: parent
-        anchors.margins: -24
+        anchors.margins: -40
         z: 999
         hoverEnabled: true
         acceptedButtons: Qt.NoButton
@@ -42,29 +41,44 @@ Item {
         anchors.rightMargin: 24
         anchors.bottomMargin: 12
         anchors.topMargin: 0
-        tint: Theme.surface
-        showShadow: true
+        tint: Qt.rgba(0,0,0,0)
+        showShadow: false
+        showHighlight: false
+        border.width: 0
+        color: "transparent"
 
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: Theme.paddingLG
-            spacing: Theme.spacingSM
+            spacing: Theme.spacingXS
 
             RowLayout {
-                spacing: Theme.spacingSM
-                Button {
-                    text: "Background"
-                    checked: root.currentTab === 0
-                    onClicked: root.currentTab = 0
+                spacing: Theme.spacingXS
+
+                TabBar {
+                    id: tabBar
+                    currentIndex: root.currentTab
+                    spacing: 4
+
+                    background: Rectangle { color: "transparent" }
+
+                    TabButton {
+                        text: qsTr("Background")
+                        checked: tabBar.currentIndex === 0
+                        onClicked: root.currentTab = 0
+                    }
+                    TabButton {
+                        text: qsTr("Workspaces")
+                        checked: tabBar.currentIndex === 1
+                        onClicked: root.currentTab = 1
+                    }
                 }
-                Button {
-                    text: "Workspaces"
-                    checked: root.currentTab === 1
-                    onClicked: root.currentTab = 1
-                }
+
                 Item { Layout.fillWidth: true }
+
                 Text {
-                    text: root.currentTab === 0 ? (wallpaperService.wallpaperNames.length + " items") : (workspaceService.workspaceNames.length + " workspaces")
+                    text: root.currentTab === 0 ? (wallpaperService.wallpaperNames.length + " items")
+                                             : (workspaceService.workspaceNames.length + " workspaces")
                     color: Theme.textMuted
                     font.pixelSize: Theme.fontXS
                 }
@@ -86,7 +100,7 @@ Item {
                     Layout.fillHeight: true
                     Flickable {
                         anchors.fill: parent
-                        anchors.margins: 8
+                        anchors.margins: 10
                         contentWidth: bgRow.implicitWidth
                         contentHeight: bgRow.implicitHeight
                         clip: true
@@ -96,46 +110,58 @@ Item {
                         }
                         RowLayout {
                             id: bgRow
-                            spacing: Theme.spacingMD
+                            spacing: Theme.spacingLG
                             Repeater {
                                 model: wallpaperService.wallpaperNames
                                 Rectangle {
                                     Layout.alignment: Qt.AlignVCenter
-                                    width: 140
-                                    height: 110
-                                    radius: Theme.radiusMedium
-                                    color: Theme.surfaceContainer
+                                    width: wallpaperCard.width
+                                    height: wallpaperCard.height
+                                    radius: Theme.radiusLarge
+                                    color: Theme.surfaceContainerLow
                                     border.width: wallpaperService.currentIndex === index ? 2 : 0
                                     border.color: Theme.primary
+
+                                    property real hoverScale: 1.0
+                                    property real pressScale: 1.0
+                                    Behavior on hoverScale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                                    Behavior on pressScale { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                                    scale: hoverScale * pressScale
+                                    Behavior on border.width { NumberAnimation { duration: 120 } }
+
                                     Image {
+                                        id: wallpaperCard
                                         anchors.fill: parent
-                                        anchors.margins: 6
-                                        source: "file:///" + wallpaperService.wallpaperPaths[index]
                                         fillMode: Image.PreserveAspectCrop
+                                        source: "file:///" + wallpaperService.wallpaperPaths[index]
                                         cache: true
                                         asynchronous: true
                                     }
-                                    Behavior on border.width {
-                                        NumberAnimation { duration: 120 }
-                                    }
+
                                     MouseArea {
                                         anchors.fill: parent
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
+                                        onPressed: parent.pressScale = 0.97
+                                        onReleased: parent.pressScale = 1.0
+                                        onEntered: parent.hoverScale = 1.04
+                                        onExited: parent.hoverScale = 1.0
                                         onClicked: wallpaperService.setWallpaperByIndex(index)
                                     }
                                 }
                             }
                         }
                     }
+
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.verticalCenter: parent.verticalCenter
                         visible: wallpaperService.wallpaperNames.length === 0
-                        text: "壁紙画像を\\nC:\\Users\\<user>\\AppData\\Roaming\\Bloom\\wallpapers に入れてください"
+                        text: "Put images into\nC:\\Users\\<user>\\AppData\\Roaming\\Bloom\\wallpapers"
                         color: Theme.textMuted
                         font.pixelSize: Theme.fontSM
                         horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.WordWrap
                     }
                 }
 
@@ -144,9 +170,9 @@ Item {
                     Layout.fillHeight: true
                     ColumnLayout {
                         anchors.fill: parent
-                        spacing: Theme.spacingSM
+                        spacing: Theme.spacingMD
                         RowLayout {
-                            spacing: Theme.spacingSM
+                            spacing: Theme.spacingMD
                             ComboBox {
                                 id: workspaceCombo
                                 Layout.fillWidth: true
@@ -154,10 +180,10 @@ Item {
                                 editable: true
                                 flat: true
                                 background: Rectangle {
-                                    radius: Theme.radiusSmall
-                                    color: Qt.rgba(1, 1, 1, 0.04)
+                                    radius: Theme.radiusFull
+                                    color: Qt.rgba(1, 1, 1, 0.05)
                                     border.width: 1
-                                    border.color: Qt.rgba(1, 1, 1, 0.06)
+                                    border.color: Qt.rgba(1, 1, 1, 0.08)
                                 }
                                 contentItem: Text {
                                     text: workspaceCombo.displayText
@@ -167,6 +193,7 @@ Item {
                                 }
                             }
                             Button {
+                                id: saveButton
                                 text: "Save"
                                 flat: true
                                 enabled: workspaceCombo.displayText.trim().length > 0
@@ -178,14 +205,15 @@ Item {
                                     horizontalAlignment: Text.AlignHCenter
                                 }
                                 background: Rectangle {
-                                    implicitWidth: 72
-                                    implicitHeight: 32
+                                    implicitWidth: 64
+                                    implicitHeight: 30
                                     radius: Theme.radiusFull
                                     color: saveButton.hovered ? Qt.lighter(Theme.primary, 1.1) : Theme.primary
                                 }
                                 onClicked: workspaceService.saveWorkspace(workspaceCombo.displayText.trim())
                             }
                             Button {
+                                id: restoreButton
                                 text: "Restore"
                                 enabled: workspaceCombo.currentIndex >= 0
                                 flat: true
@@ -197,14 +225,15 @@ Item {
                                     horizontalAlignment: Text.AlignHCenter
                                 }
                                 background: Rectangle {
-                                    implicitWidth: 80
-                                    implicitHeight: 32
+                                    implicitWidth: 72
+                                    implicitHeight: 30
                                     radius: Theme.radiusFull
                                     color: restoreButton.hovered ? Qt.lighter(Theme.primary, 1.1) : Theme.primary
                                 }
                                 onClicked: workspaceService.restoreWorkspace(workspaceCombo.currentText)
                             }
                             Button {
+                                id: deleteButton
                                 text: "Delete"
                                 enabled: workspaceCombo.currentIndex >= 0
                                 flat: true
@@ -216,18 +245,12 @@ Item {
                                     horizontalAlignment: Text.AlignHCenter
                                 }
                                 background: Rectangle {
-                                    implicitWidth: 72
-                                    implicitHeight: 32
+                                    implicitWidth: 64
+                                    implicitHeight: 30
                                     radius: Theme.radiusFull
-                                    color: deleteHover.containsMouse ? "#ff6b6b" : Qt.rgba(1, 1, 1, 0.08)
+                                    color: deleteButton.hovered ? "#ff6b6b" : Qt.rgba(1, 1, 1, 0.07)
                                     border.width: 1
                                     border.color: Qt.rgba(1, 1, 1, 0.12)
-                                }
-                                MouseArea {
-                                    id: deleteHover
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    acceptedButtons: Qt.NoButton
                                 }
                                 onClicked: workspaceService.deleteWorkspace(workspaceCombo.currentText)
                             }

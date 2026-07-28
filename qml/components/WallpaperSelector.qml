@@ -1,4 +1,4 @@
-import QtQuick
+﻿import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Bloom
@@ -46,7 +46,7 @@ GlassPanel {
                 TextField {
                     id: pathField
                     Layout.fillWidth: true
-                    placeholderText: "壁紙のパス..."
+                    placeholder: "壁紙のパス..."
                     background: Rectangle { color: "transparent" }
                     font.pixelSize: Theme.fontMD
                     color: Theme.text
@@ -85,4 +85,3 @@ GlassPanel {
         Item { Layout.fillHeight: true }
     }
 }
-

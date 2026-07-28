@@ -8,9 +8,9 @@ Rectangle {
     default property alias content: content.data
 
     radius: Theme.radiusMedium
-    color: Qt.rgba(tint.r, tint.g, tint.b, 0.88)
+    color: Qt.rgba(tint.r, tint.g, tint.b, 0.74)
     border.width: 1
-    border.color: Qt.rgba(1, 1, 1, 0.06)
+    border.color: Qt.rgba(1, 1, 1, 0.05)
 
     // Subtle shadow using layered rectangles
     Rectangle {
@@ -18,7 +18,7 @@ Rectangle {
         anchors.margins: 2
         radius: parent.radius - 2
         color: Theme.background
-        opacity: showShadow ? 0.35 : 0
+        opacity: showShadow ? 0.18 : 0
         z: -10
         Behavior on opacity { NumberAnimation { duration: Theme.durationDefault } }
     }
