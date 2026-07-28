@@ -41,11 +41,8 @@ Item {
         anchors.rightMargin: 24
         anchors.bottomMargin: 12
         anchors.topMargin: 0
-        tint: Qt.rgba(0,0,0,0)
-        showShadow: false
-        showHighlight: false
-        border.width: 0
-        color: "transparent"
+        tint: Theme.surface
+        showShadow: true
 
         ColumnLayout {
             anchors.fill: parent
