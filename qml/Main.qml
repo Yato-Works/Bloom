@@ -47,7 +47,7 @@ ApplicationWindow {
             }
         }
 
-        Rectangle {
+        MouseArea {
             id: topHit
             anchors.left: parent.left
             anchors.right: parent.right
@@ -59,7 +59,7 @@ ApplicationWindow {
             acceptedButtons: Qt.NoButton
         }
 
-        Rectangle {
+        MouseArea {
             id: bottomHit
             anchors.left: parent.left
             anchors.right: parent.right
