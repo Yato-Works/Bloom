@@ -161,7 +161,7 @@ Item {
                     ColumnLayout {
                         spacing: 1
                         Text {
-                            text: musicControl.trackTitle
+                            text: musicControl.trackTitle ?? ""
                             color: Theme.text
                             font.pixelSize: Theme.fontMD
                             font.weight: Font.DemiBold
@@ -169,7 +169,7 @@ Item {
                             Layout.preferredWidth: 132
                         }
                         Text {
-                            text: musicControl.trackArtist
+                            text: musicControl.trackArtist ?? ""
                             color: Theme.textMuted
                             font.pixelSize: Theme.fontSM
                             elide: Text.ElideRight
