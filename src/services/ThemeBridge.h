@@ -76,14 +76,14 @@ public:
     int paddingMD() const { return 16; }
     int paddingLG() const { return 20; }
     int paddingXL() const { return 24; }
-    int radiusXS() const { return 10; }
-    int radiusSM() const { return 12; }
-    int radiusMD() const { return 16; }
-    int radiusLG() const { return 22; }
-    int radiusXL() const { return 28; }
-    int radiusSmall() const { return 12; }
-    int radiusMedium() const { return 16; }
-    int radiusLarge() const { return 22; }
+    int radiusXS() const { return 12; }
+    int radiusSM() const { return 14; }
+    int radiusMD() const { return 20; }
+    int radiusLG() const { return 26; }
+    int radiusXL() const { return 32; }
+    int radiusSmall() const { return 14; }
+    int radiusMedium() const { return 20; }
+    int radiusLarge() const { return 26; }
     int radiusFull() const { return 9999; }
     int durationFast() const { return 120; }
     int durationDefault() const { return 200; }
