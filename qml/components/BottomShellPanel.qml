@@ -119,9 +119,17 @@ Item {
                                     height: wallpaperCard.height
                                     radius: Theme.radiusLarge
                                     color: Theme.surfaceContainerLow
-                                    border.width: wallpaperService.currentIndex === index ? 2 : 0
+                                    border.width: wallpaperService.currentIndex === index ? 3 : 0
                                     border.color: Theme.primary
 
+
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        radius: parent.radius
+                                        color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.12)
+                                        opacity: wallpaperService.currentIndex === index ? 1 : 0
+                                        Behavior on opacity { NumberAnimation { duration: Theme.durationFast } }
+                                    }
                                     property real hoverScale: 1.0
                                     property real pressScale: 1.0
                                     Behavior on hoverScale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
