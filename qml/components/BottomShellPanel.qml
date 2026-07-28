@@ -115,7 +115,7 @@ Item {
                                     width: wallpaperCard.width
                                     height: wallpaperCard.height
                                     radius: Theme.radiusLarge
-                                    color: Theme.surfaceContainerLow
+                                    color: Theme.surfaceContainerHigh
                                     border.width: wallpaperService.currentIndex === index ? 3 : 0
                                     border.color: Theme.primary
 
