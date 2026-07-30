@@ -1,4 +1,4 @@
-﻿import QtQuick
+import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Bloom
@@ -370,7 +370,6 @@ Item {
                                     color: Qt.rgba(1, 1, 1, 0.02)
                                     border.width: 1
                                     border.color: Qt.rgba(1, 1, 1, 0.06)
-                                    border.style: Qt.DashLine
 
                                     ColumnLayout {
                                         anchors.centerIn: parent
