@@ -7,18 +7,9 @@ Item {
     id: root
     property bool open: false
     property bool panelHovered: false
+    property int currentTab: 0
 
-    readonly property int panelWidth: 360
-
-    // Internal System Control State
-    property int volumeLevel: 72
-    property bool isMuted: false
-    property int brightnessLevel: 85
-
-    property bool wifiEnabled: true
-    property bool bluetoothEnabled: true
-    property bool nightLightEnabled: false
-    property bool powerSaverEnabled: false
+    readonly property int panelWidth: 380
 
     width: panelWidth
     anchors.top: parent.top
@@ -61,42 +52,56 @@ Item {
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 18
-            spacing: 16
+            spacing: 12
 
-            // Header Badge
+            // Header Tab Bar (Notion & AI)
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 10
+                spacing: 8
 
-                Rectangle {
-                    implicitWidth: 34
-                    implicitHeight: 34
-                    radius: 17
-                    color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.2)
-                    border.width: 1
-                    border.color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.4)
+                Repeater {
+                    model: [
+                        { icon: "📝", label: "Notion" },
+                        { icon: "🤖", label: "AI Assistant" }
+                    ]
 
-                    MaterialIcon {
-                        anchors.centerIn: parent
-                        name: "⚙"
-                        iconSize: 18
-                        iconColor: Theme.primary
+                    Item {
+                        id: leftTabBtn
+                        implicitWidth: (parent.width - 8) / 2
+                        implicitHeight: 34
+
+                        readonly property bool isActive: root.currentTab === index
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 17
+                            color: leftTabBtn.isActive ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.22)
+                                                       : Qt.rgba(1, 1, 1, 0.04)
+                            border.width: 1
+                            border.color: leftTabBtn.isActive ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.45)
+                                                              : Qt.rgba(1, 1, 1, 0.07)
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                        }
+
+                        RowLayout {
+                            anchors.centerIn: parent
+                            spacing: 6
+
+                            Text { text: modelData.icon; font.pixelSize: 13 }
+                            Text {
+                                text: modelData.label
+                                color: leftTabBtn.isActive ? "#ffffff" : Qt.rgba(1, 1, 1, 0.5)
+                                font.pixelSize: Theme.fontSM
+                                font.weight: leftTabBtn.isActive ? Font.Bold : Font.Normal
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.currentTab = index
+                        }
                     }
-                }
-
-                Text {
-                    text: "Control Center"
-                    color: "#ffffff"
-                    font.pixelSize: Theme.fontLG
-                    font.weight: Font.Bold
-                    Layout.fillWidth: true
-                }
-
-                Text {
-                    text: "Caelestia"
-                    color: Qt.rgba(1, 1, 1, 0.4)
-                    font.pixelSize: 11
-                    font.weight: Font.DemiBold
                 }
             }
 
@@ -106,254 +111,348 @@ Item {
                 color: Qt.rgba(1, 1, 1, 0.06)
             }
 
-            // Volume Control Card
-            Rectangle {
+            // Tab Content Stack
+            StackLayout {
+                currentIndex: root.currentTab
                 Layout.fillWidth: true
-                implicitHeight: 70
-                radius: 16
-                color: Qt.rgba(1, 1, 1, 0.04)
-                border.width: 1
-                border.color: Qt.rgba(1, 1, 1, 0.07)
+                Layout.fillHeight: true
 
+                // Tab 0: Notion Workspace
                 ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: 12
-                    spacing: 4
+                    spacing: 10
 
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Text {
-                            text: root.isMuted ? "🔇  Volume (Muted)" : (root.volumeLevel > 50 ? "🔊  Volume" : "🔉  Volume")
-                            color: "#ffffff"
-                            font.pixelSize: Theme.fontSM
-                            font.weight: Font.DemiBold
-                        }
-                        Item { Layout.fillWidth: true }
-                        Text {
-                            text: root.isMuted ? "0%" : root.volumeLevel + "%"
-                            color: Theme.primary
-                            font.pixelSize: Theme.fontSM
-                            font.weight: Font.Bold
-                        }
-                    }
-
+                    // Task Add Form
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 8
 
-                        Slider {
-                            id: volSlider
+                        Rectangle {
                             Layout.fillWidth: true
-                            from: 0
-                            to: 100
-                            value: root.volumeLevel
-                            onValueChanged: {
-                                root.volumeLevel = Math.round(value)
-                                if (root.volumeLevel > 0) root.isMuted = false
+                            implicitHeight: 36
+                            radius: 18
+                            color: Qt.rgba(0, 0, 0, 0.35)
+                            border.width: 1
+                            border.color: taskInput.activeFocus ? Theme.primary : Qt.rgba(1, 1, 1, 0.1)
+
+                            TextInput {
+                                id: taskInput
+                                anchors.fill: parent
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
+                                verticalAlignment: TextInput.AlignVCenter
+                                color: "#ffffff"
+                                font.pixelSize: Theme.fontSM
+                                clip: true
+
+                                Text {
+                                    text: "新しいタスクを追加..."
+                                    color: Qt.rgba(1, 1, 1, 0.35)
+                                    font.pixelSize: Theme.fontSM
+                                    visible: !taskInput.text && !taskInput.activeFocus
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+
+                                onAccepted: {
+                                    if (taskInput.text.length > 0) {
+                                        notionService.addTask(taskInput.text, "General")
+                                        taskInput.text = ""
+                                    }
+                                }
                             }
                         }
 
                         Rectangle {
-                            implicitWidth: 26
-                            implicitHeight: 26
-                            radius: 13
-                            color: root.isMuted ? Qt.rgba(1, 0.3, 0.3, 0.25) : Qt.rgba(1, 1, 1, 0.08)
+                            implicitWidth: 36
+                            implicitHeight: 36
+                            radius: 18
+                            color: addBtnMouse.containsMouse ? Theme.primary : Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.75)
 
-                            Text {
+                            MaterialIcon {
                                 anchors.centerIn: parent
-                                text: root.isMuted ? "🔇" : "🔊"
-                                font.pixelSize: 12
+                                name: "plus"
+                                iconSize: 14
+                                iconColor: "#ffffff"
                             }
 
                             MouseArea {
+                                id: addBtnMouse
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: root.isMuted = !root.isMuted
+                                onClicked: {
+                                    if (taskInput.text.length > 0) {
+                                        notionService.addTask(taskInput.text, "General")
+                                        taskInput.text = ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Task List
+                    ListView {
+                        id: taskListView
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        clip: true
+                        spacing: 8
+                        model: notionService.tasks
+
+                        delegate: Rectangle {
+                            width: taskListView.width
+                            implicitHeight: 46
+                            radius: 14
+                            color: modelData.completed ? Qt.rgba(1, 1, 1, 0.02) : Qt.rgba(1, 1, 1, 0.05)
+                            border.width: 1
+                            border.color: Qt.rgba(1, 1, 1, 0.07)
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
+                                spacing: 10
+
+                                Rectangle {
+                                    implicitWidth: 18
+                                    implicitHeight: 18
+                                    radius: 5
+                                    color: modelData.completed ? Theme.primary : "transparent"
+                                    border.width: 1.5
+                                    border.color: modelData.completed ? Theme.primary : Qt.rgba(1, 1, 1, 0.3)
+
+                                    MaterialIcon {
+                                        anchors.centerIn: parent
+                                        name: "check"
+                                        iconSize: 11
+                                        iconColor: "#ffffff"
+                                        visible: modelData.completed
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: notionService.toggleTask(index)
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+
+                                    Text {
+                                        text: modelData.title
+                                        color: modelData.completed ? Qt.rgba(1, 1, 1, 0.4) : "#ffffff"
+                                        font.pixelSize: Theme.fontSM
+                                        font.strikeout: modelData.completed
+                                        elide: Text.ElideRight
+                                        Layout.fillWidth: true
+                                    }
+
+                                    RowLayout {
+                                        spacing: 8
+                                        Text { text: modelData.category; color: Theme.primary; font.pixelSize: 9; font.weight: Font.DemiBold }
+                                        Text { text: modelData.date; color: Qt.rgba(1, 1, 1, 0.4); font.pixelSize: 9 }
+                                    }
+                                }
+
+                                Rectangle {
+                                    implicitWidth: 22
+                                    implicitHeight: 22
+                                    radius: 11
+                                    color: delTaskMouse.containsMouse ? Qt.rgba(1, 0.3, 0.3, 0.2) : "transparent"
+
+                                    MaterialIcon {
+                                        anchors.centerIn: parent
+                                        name: "close"
+                                        iconSize: 10
+                                        iconColor: delTaskMouse.containsMouse ? "#ff5555" : Qt.rgba(1, 1, 1, 0.4)
+                                    }
+
+                                    MouseArea {
+                                        id: delTaskMouse
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: notionService.removeTask(index)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Tab 1: AI Assistant
+                ColumnLayout {
+                    spacing: 10
+
+                    // Quick Chips
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        Repeater {
+                            model: ["天気は？", "Bloomとは？", "タスク一覧"]
+
+                            Rectangle {
+                                implicitWidth: chipText.implicitWidth + 14
+                                implicitHeight: 24
+                                radius: 12
+                                color: aiChipMouse.containsMouse ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.25)
+                                                                 : Qt.rgba(1, 1, 1, 0.04)
+                                border.width: 1
+                                border.color: Qt.rgba(1, 1, 1, 0.08)
+
+                                Text {
+                                    id: chipText
+                                    anchors.centerIn: parent
+                                    text: modelData
+                                    color: Qt.rgba(1, 1, 1, 0.8)
+                                    font.pixelSize: 10
+                                }
+
+                                MouseArea {
+                                    id: aiChipMouse
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: aiService.sendMessage(modelData)
+                                }
+                            }
+                        }
+                    }
+
+                    // Messages ListView
+                    ListView {
+                        id: aiListView
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        clip: true
+                        spacing: 8
+                        model: aiService.messages
+
+                        delegate: RowLayout {
+                            width: aiListView.width
+                            spacing: 8
+                            readonly property bool isUser: modelData.sender === "user"
+                            Layout.alignment: isUser ? Qt.AlignRight : Qt.AlignLeft
+
+                            Rectangle {
+                                Layout.maximumWidth: aiListView.width * 0.82
+                                implicitWidth: aiMsgCol.implicitWidth + 24
+                                implicitHeight: aiMsgCol.implicitHeight + 16
+                                radius: 14
+                                color: isUser ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.28)
+                                              : Qt.rgba(1, 1, 1, 0.06)
+                                border.width: 1
+                                border.color: isUser ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.45)
+                                                     : Qt.rgba(1, 1, 1, 0.09)
+
+                                ColumnLayout {
+                                    id: aiMsgCol
+                                    anchors.centerIn: parent
+                                    width: parent.width - 24
+                                    spacing: 4
+
+                                    Text {
+                                        text: modelData.text
+                                        color: "#ffffff"
+                                        font.pixelSize: Theme.fontSM
+                                        wrapMode: Text.Wrap
+                                        Layout.fillWidth: true
+                                    }
+
+                                    Text {
+                                        text: modelData.time
+                                        color: Qt.rgba(1, 1, 1, 0.4)
+                                        font.pixelSize: 9
+                                        Layout.alignment: isUser ? Qt.AlignRight : Qt.AlignLeft
+                                    }
+                                }
+                            }
+                        }
+
+                        onCountChanged: aiListView.positionViewAtEnd()
+                    }
+
+                    // AI Generating Status
+                    RowLayout {
+                        Layout.fillWidth: true
+                        visible: aiService.isGenerating
+                        spacing: 8
+
+                        Text {
+                            text: "AIが思考中..."
+                            color: Theme.primary
+                            font.pixelSize: Theme.fontXS
+                            font.italic: true
+                        }
+                    }
+
+                    // AI Prompt Input Form
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: 36
+                            radius: 18
+                            color: Qt.rgba(0, 0, 0, 0.35)
+                            border.width: 1
+                            border.color: promptInput.activeFocus ? Theme.primary : Qt.rgba(1, 1, 1, 0.1)
+
+                            TextInput {
+                                id: promptInput
+                                anchors.fill: parent
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
+                                verticalAlignment: TextInput.AlignVCenter
+                                color: "#ffffff"
+                                font.pixelSize: Theme.fontSM
+                                clip: true
+
+                                Text {
+                                    text: "AIに質問・メッセージ..."
+                                    color: Qt.rgba(1, 1, 1, 0.35)
+                                    font.pixelSize: Theme.fontSM
+                                    visible: !promptInput.text && !promptInput.activeFocus
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+
+                                onAccepted: {
+                                    if (promptInput.text.length > 0) {
+                                        aiService.sendMessage(promptInput.text)
+                                        promptInput.text = ""
+                                    }
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            implicitWidth: 36
+                            implicitHeight: 36
+                            radius: 18
+                            color: sendBtnMouse.containsMouse ? Theme.primary : Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.75)
+
+                            MaterialIcon {
+                                anchors.centerIn: parent
+                                name: "send"
+                                iconSize: 13
+                                iconColor: "#ffffff"
+                            }
+
+                            MouseArea {
+                                id: sendBtnMouse
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    if (promptInput.text.length > 0) {
+                                        aiService.sendMessage(promptInput.text)
+                                        promptInput.text = ""
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
-
-            // Brightness Control Card
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: 70
-                radius: 16
-                color: Qt.rgba(1, 1, 1, 0.04)
-                border.width: 1
-                border.color: Qt.rgba(1, 1, 1, 0.07)
-
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: 12
-                    spacing: 4
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Text {
-                            text: "☀️  Brightness"
-                            color: "#ffffff"
-                            font.pixelSize: Theme.fontSM
-                            font.weight: Font.DemiBold
-                        }
-                        Item { Layout.fillWidth: true }
-                        Text {
-                            text: root.brightnessLevel + "%"
-                            color: "#cba6f7"
-                            font.pixelSize: Theme.fontSM
-                            font.weight: Font.Bold
-                        }
-                    }
-
-                    Slider {
-                        id: brightSlider
-                        Layout.fillWidth: true
-                        from: 10
-                        to: 100
-                        value: root.brightnessLevel
-                        onValueChanged: root.brightnessLevel = Math.round(value)
-                    }
-                }
-            }
-
-            // Caelestia Quick Toggles Grid (2x2)
-            GridLayout {
-                Layout.fillWidth: true
-                columns: 2
-                columnSpacing: 10
-                rowSpacing: 10
-
-                // Toggle 1: Wi-Fi
-                Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: 50
-                    radius: 14
-                    color: root.wifiEnabled ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.2)
-                                            : Qt.rgba(1, 1, 1, 0.04)
-                    border.width: 1
-                    border.color: root.wifiEnabled ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.4)
-                                                   : Qt.rgba(1, 1, 1, 0.08)
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
-                        spacing: 8
-
-                        Text { text: "📶"; font.pixelSize: 16 }
-                        ColumnLayout {
-                            spacing: 0
-                            Text { text: "Wi-Fi"; color: "#ffffff"; font.pixelSize: 12; font.weight: Font.Bold }
-                            Text { text: root.wifiEnabled ? "Connected" : "Off"; color: Qt.rgba(1, 1, 1, 0.5); font.pixelSize: 10 }
-                        }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.wifiEnabled = !root.wifiEnabled
-                    }
-                }
-
-                // Toggle 2: Bluetooth
-                Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: 50
-                    radius: 14
-                    color: root.bluetoothEnabled ? Qt.rgba(0.5, 0.7, 1.0, 0.2)
-                                                 : Qt.rgba(1, 1, 1, 0.04)
-                    border.width: 1
-                    border.color: root.bluetoothEnabled ? Qt.rgba(0.5, 0.7, 1.0, 0.4)
-                                                        : Qt.rgba(1, 1, 1, 0.08)
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
-                        spacing: 8
-
-                        Text { text: "🌐"; font.pixelSize: 16 }
-                        ColumnLayout {
-                            spacing: 0
-                            Text { text: "Bluetooth"; color: "#ffffff"; font.pixelSize: 12; font.weight: Font.Bold }
-                            Text { text: root.bluetoothEnabled ? "On" : "Off"; color: Qt.rgba(1, 1, 1, 0.5); font.pixelSize: 10 }
-                        }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.bluetoothEnabled = !root.bluetoothEnabled
-                    }
-                }
-
-                // Toggle 3: Night Light
-                Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: 50
-                    radius: 14
-                    color: root.nightLightEnabled ? Qt.rgba(1.0, 0.7, 0.3, 0.2)
-                                                   : Qt.rgba(1, 1, 1, 0.04)
-                    border.width: 1
-                    border.color: root.nightLightEnabled ? Qt.rgba(1.0, 0.7, 0.3, 0.4)
-                                                          : Qt.rgba(1, 1, 1, 0.08)
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
-                        spacing: 8
-
-                        Text { text: "🌙"; font.pixelSize: 16 }
-                        ColumnLayout {
-                            spacing: 0
-                            Text { text: "Night Light"; color: "#ffffff"; font.pixelSize: 12; font.weight: Font.Bold }
-                            Text { text: root.nightLightEnabled ? "Active" : "Off"; color: Qt.rgba(1, 1, 1, 0.5); font.pixelSize: 10 }
-                        }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.nightLightEnabled = !root.nightLightEnabled
-                    }
-                }
-
-                // Toggle 4: Power Saver
-                Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: 50
-                    radius: 14
-                    color: root.powerSaverEnabled ? Qt.rgba(0.4, 0.9, 0.5, 0.2)
-                                                  : Qt.rgba(1, 1, 1, 0.04)
-                    border.width: 1
-                    border.color: root.powerSaverEnabled ? Qt.rgba(0.4, 0.9, 0.5, 0.4)
-                                                         : Qt.rgba(1, 1, 1, 0.08)
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
-                        spacing: 8
-
-                        Text { text: "🔋"; font.pixelSize: 16 }
-                        ColumnLayout {
-                            spacing: 0
-                            Text { text: "Power Saver"; color: "#ffffff"; font.pixelSize: 12; font.weight: Font.Bold }
-                            Text { text: root.powerSaverEnabled ? "Saving" : "Normal"; color: Qt.rgba(1, 1, 1, 0.5); font.pixelSize: 10 }
-                        }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.powerSaverEnabled = !root.powerSaverEnabled
-                    }
-                }
-            }
-
-            Item { Layout.fillHeight: true }
         }
     }
 }
