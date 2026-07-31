@@ -171,7 +171,7 @@ Item {
                 // Tab 0: Clock
                 RowLayout {
                     spacing: 24
-                    alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
 
                     ColumnLayout {
                         spacing: 2
@@ -193,7 +193,7 @@ Item {
                 // Tab 1: Weather
                 RowLayout {
                     spacing: 20
-                    alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
 
                     Text {
                         text: weatherService.weatherIcon
@@ -219,7 +219,7 @@ Item {
                 // Tab 2: Media
                 RowLayout {
                     spacing: 16
-                    alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
 
                     Rectangle {
                         implicitWidth: 54
@@ -283,7 +283,7 @@ Item {
                 // Tab 3: System Metrics
                 RowLayout {
                     spacing: 32
-                    alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
 
                     RowLayout {
                         spacing: 12
