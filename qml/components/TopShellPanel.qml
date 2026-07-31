@@ -1,4 +1,4 @@
-﻿import QtQuick
+import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Bloom
@@ -9,9 +9,13 @@ Item {
     property bool panelHovered: false
     property int currentTab: 0
 
-    readonly property int panelHeight: 200
+    readonly property int panelHeight: 205
 
     height: panelHeight
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.top: parent.top
+
     opacity: open ? 1 : 0
 
     transform: [
@@ -20,20 +24,20 @@ Item {
             Behavior on y {
                 NumberAnimation {
                     duration: Theme.durationDefault
-                    easing.type: Easing.OutCubic
+                    easing.type: Easing.OutExpo
                 }
             }
         },
         Scale {
-            id: panelScale
-            origin.y: root.panelHeight
-            xScale: root.open ? 1.0 : 0.97
-            yScale: root.open ? 1.0 : 0.97
+            origin.x: root.width / 2
+            origin.y: 0
+            xScale: root.open ? 1.0 : 0.96
+            yScale: root.open ? 1.0 : 0.96
             Behavior on xScale {
-                NumberAnimation { duration: Theme.durationDefault; easing.type: Easing.OutCubic }
+                NumberAnimation { duration: Theme.durationDefault; easing.type: Easing.OutExpo }
             }
             Behavior on yScale {
-                NumberAnimation { duration: Theme.durationDefault; easing.type: Easing.OutCubic }
+                NumberAnimation { duration: Theme.durationDefault; easing.type: Easing.OutExpo }
             }
         }
     ]
@@ -41,7 +45,7 @@ Item {
         NumberAnimation { duration: Theme.durationFast }
     }
 
-    // Hit area for hover detection (extended beyond panel bounds)
+    // Hover hit zone
     MouseArea {
         anchors.fill: parent
         anchors.margins: -24
@@ -51,361 +55,259 @@ Item {
         onContainsMouseChanged: root.panelHovered = containsMouse
     }
 
+    // Floating Glass Panel Header Widget
     GlassPanel {
-        anchors.fill: parent
-        anchors.leftMargin: 32
-        anchors.rightMargin: 32
+        id: topGlass
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
         anchors.topMargin: 16
-        anchors.bottomMargin: 0
-        tint: Theme.surface
+        width: Math.min(parent.width * 0.75, 880)
+        implicitHeight: 180
+        radius: 24
+        tint: Qt.rgba(0.08, 0.08, 0.12, 0.90)
         elevated: true
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: Theme.paddingLG
-            spacing: Theme.spacingSM
+            anchors.margins: 16
+            spacing: 12
 
-            // Tab Bar
+            // Caelestia Sliding Pill Tab Bar Header
             RowLayout {
-                spacing: Theme.spacingXS
                 Layout.fillWidth: true
+                spacing: 6
 
-                Repeater {
-                    model: [
+                Item {
+                    id: tabBarContainer
+                    Layout.fillWidth: true
+                    implicitHeight: 36
+
+                    readonly property var tabs: [
                         { icon: "🕐", label: "Clock" },
                         { icon: "☁", label: "Weather" },
                         { icon: "🎵", label: "Media" },
                         { icon: "⚙", label: "System" }
                     ]
 
-                    Item {
-                        id: tabItem
-                        implicitWidth: tabContent.implicitWidth + 24
-                        implicitHeight: 36
+                    RowLayout {
+                        id: tabsRow
+                        anchors.left: parent.left
+                        spacing: 4
 
-                        property bool isActive: root.currentTab === index
+                        Repeater {
+                            model: tabBarContainer.tabs
 
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: Theme.radiusFull
-                            color: isActive ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.15)
-                                            : (tabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent")
-                            Behavior on color { ColorAnimation { duration: Theme.durationFast } }
-                        }
+                            Item {
+                                id: tabBtn
+                                implicitWidth: tabRow.implicitWidth + 24
+                                implicitHeight: 34
 
-                        RowLayout {
-                            id: tabContent
-                            anchors.centerIn: parent
-                            spacing: 6
+                                property bool isActive: root.currentTab === index
 
-                            Text {
-                                text: modelData.icon
-                                font.pixelSize: 14
-                                color: tabItem.isActive ? Theme.primary : Theme.textMuted
+                                RowLayout {
+                                    id: tabRow
+                                    anchors.centerIn: parent
+                                    spacing: 6
+
+                                    Text {
+                                        text: modelData.icon
+                                        font.pixelSize: 13
+                                    }
+                                    Text {
+                                        text: modelData.label
+                                        color: tabBtn.isActive ? "#ffffff" : Qt.rgba(1, 1, 1, 0.5)
+                                        font.pixelSize: Theme.fontSM
+                                        font.weight: tabBtn.isActive ? Font.DemiBold : Font.Normal
+                                        Behavior on color { ColorAnimation { duration: 150 } }
+                                    }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.currentTab = index
+                                }
                             }
-                            Text {
-                                text: modelData.label
-                                color: tabItem.isActive ? Theme.text : Theme.textMuted
-                                font.pixelSize: Theme.fontSM
-                                font.weight: tabItem.isActive ? Font.DemiBold : Font.Normal
-                            }
                         }
+                    }
 
-                        // Active indicator dot
-                        Rectangle {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.bottom: parent.bottom
-                            anchors.bottomMargin: -4
-                            width: isActive ? 20 : 0
-                            height: 3
-                            radius: 1.5
-                            color: Theme.primary
-                            opacity: isActive ? 1 : 0
-                            Behavior on width { NumberAnimation { duration: Theme.durationFast } }
-                            Behavior on opacity { NumberAnimation { duration: Theme.durationFast } }
+                    // Sliding Pill Indicator
+                    Rectangle {
+                        id: pillIndicator
+                        height: 34
+                        radius: 17
+                        color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.22)
+                        border.width: 1
+                        border.color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.45)
+                        z: -1
+
+                        property Item targetTabItem: tabsRow.children[root.currentTab] || null
+
+                        x: targetTabItem ? targetTabItem.x : 0
+                        width: targetTabItem ? targetTabItem.width : 0
+
+                        Behavior on x {
+                            NumberAnimation { duration: 220; easing.type: Easing.OutExpo }
                         }
-
-                        MouseArea {
-                            id: tabMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.currentTab = index
+                        Behavior on width {
+                            NumberAnimation { duration: 220; easing.type: Easing.OutExpo }
                         }
                     }
                 }
-
-                Item { Layout.fillWidth: true }
             }
 
-            // Separator
             Rectangle {
                 Layout.fillWidth: true
                 height: 1
                 color: Qt.rgba(1, 1, 1, 0.06)
             }
 
-            // Tab Content
+            // Tab Content Stack
             StackLayout {
+                currentIndex: root.currentTab
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                currentIndex: root.currentTab
 
-                // Clock Tab
-                Item {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
+                // Tab 0: Clock
+                RowLayout {
+                    spacing: 24
+                    alignment: Qt.AlignHCenter | Qt.AlignVCenter
 
-                    RowLayout {
-                        anchors.centerIn: parent
-                        spacing: Theme.spacingXL
-
-                        ColumnLayout {
-                            spacing: 2
-                            Layout.alignment: Qt.AlignVCenter
-
-                            Text {
-                                id: clockText
-                                text: Qt.formatTime(new Date(), "hh:mm")
-                                color: Theme.text
-                                font.pixelSize: 52
-                                font.weight: Font.Light
-                                font.family: "Segoe UI"
-                            }
-                            Text {
-                                id: dateText
-                                text: Qt.formatDate(new Date(), "dddd - MMM d")
-                                color: Theme.textMuted
-                                font.pixelSize: Theme.fontSM
-                            }
-
-                            Timer {
-                                interval: 1000
-                                running: root.open && root.currentTab === 0
-                                repeat: true
-                                onTriggered: {
-                                    const now = new Date()
-                                    clockText.text = Qt.formatTime(now, "hh:mm")
-                                    dateText.text = Qt.formatDate(now, "dddd - MMM d")
-                                }
-                            }
+                    ColumnLayout {
+                        spacing: 2
+                        Text {
+                            text: systemInfo.formattedTime
+                            color: "#ffffff"
+                            font.pixelSize: 42
+                            font.weight: Font.Light
+                            font.family: "Segoe UI"
+                        }
+                        Text {
+                            text: systemInfo.formattedDate
+                            color: Qt.rgba(1, 1, 1, 0.6)
+                            font.pixelSize: Theme.fontMD
                         }
                     }
                 }
 
-                // Weather Tab
-                Item {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
+                // Tab 1: Weather
+                RowLayout {
+                    spacing: 20
+                    alignment: Qt.AlignHCenter | Qt.AlignVCenter
+
+                    Text {
+                        text: weatherService.weatherIcon
+                        font.pixelSize: 44
+                    }
+
+                    ColumnLayout {
+                        spacing: 2
+                        Text {
+                            text: weatherService.temperature
+                            color: "#ffffff"
+                            font.pixelSize: 28
+                            font.weight: Font.Bold
+                        }
+                        Text {
+                            text: weatherService.conditionText + " | 湿度 " + weatherService.humidity
+                            color: Qt.rgba(1, 1, 1, 0.65)
+                            font.pixelSize: Theme.fontSM
+                        }
+                    }
+                }
+
+                // Tab 2: Media
+                RowLayout {
+                    spacing: 16
+                    alignment: Qt.AlignHCenter | Qt.AlignVCenter
+
+                    Rectangle {
+                        implicitWidth: 54
+                        implicitHeight: 54
+                        radius: 12
+                        color: Qt.rgba(1, 1, 1, 0.08)
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "🎵"
+                            font.pixelSize: 24
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 2
+                        Text {
+                            text: musicControl.trackTitle !== "" ? musicControl.trackTitle : "再生中の曲はありません"
+                            color: "#ffffff"
+                            font.pixelSize: Theme.fontMD
+                            font.weight: Font.Bold
+                            elide: Text.ElideRight
+                        }
+                        Text {
+                            text: musicControl.artistName !== "" ? musicControl.artistName : "Caelestia Audio Player"
+                            color: Qt.rgba(1, 1, 1, 0.6)
+                            font.pixelSize: Theme.fontSM
+                        }
+                    }
 
                     RowLayout {
-                        anchors.centerIn: parent
-                        spacing: Theme.spacing2XL
-
-                        ColumnLayout {
-                            spacing: Theme.spacingXS
-                            Layout.alignment: Qt.AlignVCenter
-
-                            RowLayout {
-                                spacing: Theme.spacingSM
-                                Text {
-                                    text: "☁"
-                                    color: Theme.primary
-                                    font.pixelSize: 32
-                                }
-                                ColumnLayout {
-                                    spacing: 0
-                                    Text {
-                                        text: weatherService.temperature
-                                        color: Theme.text
-                                        font.pixelSize: 36
-                                        font.weight: Font.Light
-                                    }
-                                    Text {
-                                        text: weatherService.condition
-                                        color: Theme.textMuted
-                                        font.pixelSize: Theme.fontSM
-                                    }
-                                }
-                            }
-                            Text {
-                                text: weatherService.city
-                                color: Theme.textMuted
-                                font.pixelSize: Theme.fontXS
-                            }
-                        }
-
+                        spacing: 8
                         Rectangle {
-                            width: 1
-                            height: 64
-                            color: Qt.rgba(1, 1, 1, 0.06)
+                            implicitWidth: 36
+                            implicitHeight: 36
+                            radius: 18
+                            color: Qt.rgba(1, 1, 1, 0.08)
+                            Text { anchors.centerIn: parent; text: "⏮"; color: "#fff" }
+                            MouseArea { anchors.fill: parent; onClicked: musicControl.previous() }
                         }
-
-                        ColumnLayout {
-                            spacing: Theme.spacingSM
-                            Layout.alignment: Qt.AlignVCenter
-
-                            RowLayout {
-                                spacing: Theme.spacingMD
-                                ColumnLayout {
-                                    spacing: 2
-                                    Text { text: "Wind"; color: Theme.textMuted; font.pixelSize: Theme.fontXS }
-                                    Text { text: weatherService.wind; color: Theme.text; font.pixelSize: Theme.fontSM; font.weight: Font.DemiBold }
-                                }
-                                ColumnLayout {
-                                    spacing: 2
-                                    Text { text: "Humidity"; color: Theme.textMuted; font.pixelSize: Theme.fontXS }
-                                    Text { text: weatherService.humidity; color: Theme.text; font.pixelSize: Theme.fontSM; font.weight: Font.DemiBold }
-                                }
-                                ColumnLayout {
-                                    spacing: 2
-                                    Text { text: "Pressure"; color: Theme.textMuted; font.pixelSize: Theme.fontXS }
-                                    Text { text: weatherService.pressure; color: Theme.text; font.pixelSize: Theme.fontSM; font.weight: Font.DemiBold }
-                                }
-                            }
-
-                            Row {
-                                spacing: Theme.spacingSM
-                                Repeater {
-                                    model: 5
-                                    ForecastItem {
-                                        hour: "0" + (index + 8) + ":00"
-                                        symbol: ["☀", "⛅", "☁", "🌧", "☀"][index]
-                                        temperature: [22, 24, 23, 20, 21][index] + "°"
-                                        implicitWidth: 48
-                                        implicitHeight: 90
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Media Tab
-                Item {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-
-                    RowLayout {
-                        anchors.centerIn: parent
-                        spacing: Theme.spacingXL
-
-                        ColumnLayout {
-                            spacing: Theme.spacingSM
-                            Layout.alignment: Qt.AlignVCenter
-                            Layout.preferredWidth: 300
-
-                            Text {
-                                text: musicControl.songTitle
-                                color: Theme.text
-                                font.pixelSize: Theme.fontLG
-                                font.weight: Font.DemiBold
-                                elide: Text.ElideRight
-                                Layout.fillWidth: true
-                            }
-                            Text {
-                                text: musicControl.artist
-                                color: Theme.textMuted
-                                font.pixelSize: Theme.fontSM
-                                elide: Text.ElideRight
-                                Layout.fillWidth: true
-                            }
-
-                            // Progress bar
-                            Rectangle {
-                                Layout.fillWidth: true
-                                height: 4
-                                radius: 2
-                                color: Qt.rgba(1, 1, 1, 0.08)
-                                Rectangle {
-                                    width: parent.width * 0.45
-                                    height: parent.height
-                                    radius: 2
-                                    color: Theme.primary
-                                }
-                            }
-
-                            RowLayout {
-                                spacing: Theme.spacingSM
-                                Layout.alignment: Qt.AlignHCenter
-
-                                Rectangle {
-                                    width: 36; height: 36; radius: 18
-                                    color: prevMedia.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
-                                    Text { anchors.centerIn: parent; text: "⏮"; color: Theme.text; font.pixelSize: 14 }
-                                    MouseArea { id: prevMedia; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: musicControl.previous() }
-                                }
-                                Rectangle {
-                                    width: 44; height: 44; radius: 22
-                                    color: Theme.primary
-                                    Text { anchors.centerIn: parent; text: musicControl.isPlaying ? "⏸" : "▶"; color: Theme.onPrimary; font.pixelSize: 16 }
-                                    MouseArea { id: playMedia; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: musicControl.togglePlayPause() }
-                                }
-                                Rectangle {
-                                    width: 36; height: 36; radius: 18
-                                    color: nextMedia.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
-                                    Text { anchors.centerIn: parent; text: "⏭"; color: Theme.text; font.pixelSize: 14 }
-                                    MouseArea { id: nextMedia; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: musicControl.next() }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // System Tab
-                Item {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-
-                    RowLayout {
-                        anchors.centerIn: parent
-                        spacing: Theme.spacing2XL
-
-                        MetricRing {
-                            label: "CPU"
-                            value: systemInfo.cpuUsage
-                            accent: Theme.primary
-                            implicitWidth: 80
-                            implicitHeight: 90
-                        }
-                        MetricRing {
-                            label: "RAM"
-                            value: systemInfo.memoryUsage
-                            accent: Theme.accent
-                            implicitWidth: 80
-                            implicitHeight: 90
-                        }
-
                         Rectangle {
-                            width: 1; height: 64
-                            color: Qt.rgba(1, 1, 1, 0.06)
+                            implicitWidth: 42
+                            implicitHeight: 42
+                            radius: 21
+                            color: Theme.primary
+                            Text { anchors.centerIn: parent; text: musicControl.isPlaying ? "⏸" : "▶"; color: "#fff" }
+                            MouseArea { anchors.fill: parent; onClicked: musicControl.playPause() }
                         }
+                        Rectangle {
+                            implicitWidth: 36
+                            implicitHeight: 36
+                            radius: 18
+                            color: Qt.rgba(1, 1, 1, 0.08)
+                            Text { anchors.centerIn: parent; text: "⏭"; color: "#fff" }
+                            MouseArea { anchors.fill: parent; onClicked: musicControl.next() }
+                        }
+                    }
+                }
 
+                // Tab 3: System Metrics
+                RowLayout {
+                    spacing: 32
+                    alignment: Qt.AlignHCenter | Qt.AlignVCenter
+
+                    RowLayout {
+                        spacing: 12
+                        MetricRing {
+                            size: 54
+                            value: systemInfo.cpuUsage / 100.0
+                            color: Theme.primary
+                        }
                         ColumnLayout {
-                            spacing: Theme.spacingSM
-                            Layout.alignment: Qt.AlignVCenter
+                            Text { text: "CPU"; color: Qt.rgba(1, 1, 1, 0.5); font.pixelSize: 11 }
+                            Text { text: systemInfo.cpuUsage + "%"; color: "#ffffff"; font.pixelSize: 16; font.weight: Font.Bold }
+                        }
+                    }
 
-                            RowLayout {
-                                spacing: Theme.spacingSM
-                                Text { text: "💻"; font.pixelSize: 20 }
-                                ColumnLayout {
-                                    spacing: 0
-                                    Text { text: systemInfo.hostName; color: Theme.text; font.pixelSize: Theme.fontMD; font.weight: Font.DemiBold }
-                                    Text { text: "Uptime: " + systemInfo.uptime; color: Theme.textMuted; font.pixelSize: Theme.fontXS }
-                                }
-                            }
-
-                            RowLayout {
-                                spacing: Theme.spacingMD
-                                ColumnLayout { spacing: 2
-                                    Text { text: "OS"; color: Theme.textMuted; font.pixelSize: Theme.fontXS }
-                                    Text { text: "Windows 11"; color: Theme.text; font.pixelSize: Theme.fontSM; font.weight: Font.DemiBold }
-                                }
-                                ColumnLayout { spacing: 2
-                                    Text { text: "CPU Temp"; color: Theme.textMuted; font.pixelSize: Theme.fontXS }
-                                    Text { text: "—"; color: Theme.text; font.pixelSize: Theme.fontSM; font.weight: Font.DemiBold }
-                                }
-                            }
+                    RowLayout {
+                        spacing: 12
+                        MetricRing {
+                            size: 54
+                            value: systemInfo.ramUsage / 100.0
+                            color: "#cba6f7"
+                        }
+                        ColumnLayout {
+                            Text { text: "RAM"; color: Qt.rgba(1, 1, 1, 0.5); font.pixelSize: 11 }
+                            Text { text: systemInfo.ramUsage + "%"; color: "#ffffff"; font.pixelSize: 16; font.weight: Font.Bold }
                         }
                     }
                 }

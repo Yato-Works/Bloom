@@ -1,75 +1,72 @@
 import QtQuick
+import Bloom
 
 Rectangle {
     id: panel
-    property color tint: Theme.surfaceRaised
+    property color tint: Qt.rgba(0.06, 0.07, 0.10, 0.88)
     property bool showShadow: true
     property bool showHighlight: true
     property bool elevated: false
     default property alias content: content.data
 
     radius: Theme.radiusLG
-    color: Qt.rgba(tint.r, tint.g, tint.b, elevated ? 0.88 : 0.82)
+    color: Qt.rgba(tint.r, tint.g, tint.b, elevated ? 0.92 : 0.86)
     border.width: 1
-    border.color: Qt.rgba(1, 1, 1, elevated ? 0.14 : 0.10)
+    border.color: Qt.rgba(1, 1, 1, elevated ? 0.12 : 0.08)
 
-    // Multi-layer shadow for depth
+    // Secondary inner highlight border for premium glass feel
     Rectangle {
         anchors.fill: parent
-        anchors.margins: elevated ? 1 : 2
-        radius: parent.radius - (elevated ? 1 : 2)
-        color: Theme.background
-        opacity: showShadow ? (elevated ? 0.35 : 0.26) : 0
+        anchors.margins: 1
+        radius: Math.max(0, parent.radius - 1)
+        color: "transparent"
+        border.width: 1
+        border.color: Qt.rgba(1, 1, 1, 0.04)
+        z: 2
+    }
+
+    // Outer Glow / Ambient Drop Shadow
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: elevated ? -2 : -1
+        radius: parent.radius + 2
+        color: Qt.rgba(0, 0, 0, showShadow ? (elevated ? 0.45 : 0.30) : 0)
         z: -10
-        Behavior on opacity { NumberAnimation { duration: Theme.durationDefault } }
+        Behavior on color { ColorAnimation { duration: Theme.durationFast } }
     }
 
-    // Secondary softer shadow layer
-    Rectangle {
-        anchors.fill: parent
-        anchors.margins: elevated ? 3 : 4
-        radius: parent.radius - (elevated ? 3 : 4)
-        color: Theme.background
-        opacity: showShadow ? 0.12 : 0
-        z: -11
-        Behavior on opacity { NumberAnimation { duration: Theme.durationDefault } }
-    }
-
-    // Top edge highlight for glass effect
+    // Top edge specular reflection
     Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        height: 1
-        color: Qt.rgba(1, 1, 1, 0.10)
+        anchors.leftMargin: parent.radius / 2
+        anchors.rightMargin: parent.radius / 2
+        height: 1.5
+        radius: 1
+        color: Qt.rgba(1, 1, 1, elevated ? 0.18 : 0.12)
         visible: showHighlight
+        z: 3
     }
 
-    // Bottom edge subtle reflection
-    Rectangle {
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        height: 1
-        color: Qt.rgba(0, 0, 0, 0.10)
-        visible: showHighlight
-    }
-
-    // Inner gradient for depth
+    // Dynamic Glass Inner Surface Gradient
     Rectangle {
         anchors.fill: parent
         radius: parent.radius
+        z: 1
         gradient: Gradient {
-            GradientStop { position: 0
-                color: Qt.rgba(1, 1, 1, elevated ? 0.06 : 0.04) }
-            GradientStop { position: 0.5
-                color: "transparent" }
-            GradientStop { position: 1
-                color: Qt.rgba(0, 0, 0, elevated ? 0.08 : 0.05) }
+            GradientStop { position: 0.0; color: Qt.rgba(1, 1, 1, elevated ? 0.07 : 0.04) }
+            GradientStop { position: 0.4; color: Qt.rgba(1, 1, 1, 0.01) }
+            GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, elevated ? 0.12 : 0.06) }
         }
     }
 
-    Item { id: content; anchors.fill: parent; anchors.margins: 2 }
+    Item {
+        id: content
+        anchors.fill: parent
+        z: 5
+    }
+
     Behavior on color { ColorAnimation { duration: Theme.durationFast } }
     Behavior on radius { NumberAnimation { duration: Theme.durationFast } }
 }

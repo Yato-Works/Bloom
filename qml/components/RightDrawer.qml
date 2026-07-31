@@ -13,17 +13,17 @@ Item {
     width: panelWidth
     anchors.top: parent.top
     anchors.bottom: parent.bottom
-    anchors.topMargin: 48
-    anchors.bottomMargin: 48
+    anchors.topMargin: 36
+    anchors.bottomMargin: 36
 
     opacity: open ? 1 : 0
 
     transform: Translate {
-        x: root.open ? 0 : (root.panelWidth + 32)
+        x: root.open ? 0 : (root.panelWidth + 40)
         Behavior on x {
             NumberAnimation {
-                duration: Theme.durationDefault
-                easing.type: Easing.OutCubic
+                duration: 260
+                easing.type: Easing.OutExpo
             }
         }
     }
@@ -34,7 +34,7 @@ Item {
     // Hover hit zone
     MouseArea {
         anchors.fill: parent
-        anchors.margins: -24
+        anchors.margins: -30
         z: 999
         hoverEnabled: true
         acceptedButtons: Qt.NoButton
@@ -43,38 +43,50 @@ Item {
 
     GlassPanel {
         anchors.fill: parent
-        anchors.rightMargin: 16
-        tint: Theme.surface
+        anchors.rightMargin: 20
+        tint: Qt.rgba(0.08, 0.08, 0.12, 0.92)
         elevated: true
+        radius: 24
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: Theme.paddingLG
-            spacing: Theme.spacingMD
+            anchors.margins: 18
+            spacing: 12
 
-            // Header
+            // Header Badge
             RowLayout {
                 Layout.fillWidth: true
-                spacing: Theme.spacingSM
+                spacing: 10
 
-                MaterialIcon {
-                    name: "notion"
-                    iconSize: 22
+                Rectangle {
+                    implicitWidth: 34
+                    implicitHeight: 34
+                    radius: 17
+                    color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.2)
+                    border.width: 1
+                    border.color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.4)
+
+                    MaterialIcon {
+                        anchors.centerIn: parent
+                        name: "notion"
+                        iconSize: 18
+                        iconColor: Theme.primary
+                    }
                 }
 
                 Text {
                     text: "Notion Workspace"
-                    color: Theme.textPrimary
+                    color: "#ffffff"
                     font.pixelSize: Theme.fontLG
                     font.weight: Font.Bold
                     Layout.fillWidth: true
                 }
 
                 Rectangle {
-                    implicitWidth: 28
-                    implicitHeight: 20
-                    radius: Theme.radiusFull
-                    color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.2)
+                    implicitWidth: 26
+                    implicitHeight: 22
+                    radius: 11
+                    color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.25)
 
                     Text {
                         anchors.centerIn: parent
@@ -89,35 +101,35 @@ Item {
             Rectangle {
                 Layout.fillWidth: true
                 height: 1
-                color: Qt.rgba(1, 1, 1, 0.08)
+                color: Qt.rgba(1, 1, 1, 0.06)
             }
 
             // Task Add Input Form
             RowLayout {
                 Layout.fillWidth: true
-                spacing: Theme.spacingXS
+                spacing: 8
 
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 36
-                    radius: Theme.radiusMedium
-                    color: Qt.rgba(1, 1, 1, 0.04)
+                    implicitHeight: 38
+                    radius: 19
+                    color: Qt.rgba(0, 0, 0, 0.35)
                     border.width: 1
                     border.color: taskTitleInput.activeFocus ? Theme.primary : Qt.rgba(1, 1, 1, 0.1)
 
                     TextInput {
                         id: taskTitleInput
                         anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
+                        anchors.leftMargin: 14
+                        anchors.rightMargin: 14
                         verticalAlignment: TextInput.AlignVCenter
-                        color: Theme.textPrimary
+                        color: "#ffffff"
                         font.pixelSize: Theme.fontSM
                         clip: true
 
                         Text {
                             text: "新しいタスクを追加..."
-                            color: Theme.textMuted
+                            color: Qt.rgba(1, 1, 1, 0.35)
                             font.pixelSize: Theme.fontSM
                             visible: !taskTitleInput.text && !taskTitleInput.activeFocus
                             anchors.verticalCenter: parent.verticalCenter
@@ -133,10 +145,10 @@ Item {
                 }
 
                 Rectangle {
-                    implicitWidth: 36
-                    implicitHeight: 36
-                    radius: Theme.radiusMedium
-                    color: addMouse.containsMouse ? Theme.primary : Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.7)
+                    implicitWidth: 38
+                    implicitHeight: 38
+                    radius: 19
+                    color: addMouse.containsMouse ? Theme.primary : Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.75)
 
                     MaterialIcon {
                         anchors.centerIn: parent
@@ -171,11 +183,11 @@ Item {
 
                 delegate: Rectangle {
                     width: taskListView.width
-                    implicitHeight: 46
-                    radius: Theme.radiusMedium
+                    implicitHeight: 48
+                    radius: 14
                     color: modelData.completed ? Qt.rgba(1, 1, 1, 0.02) : Qt.rgba(1, 1, 1, 0.05)
                     border.width: 1
-                    border.color: Qt.rgba(1, 1, 1, 0.06)
+                    border.color: Qt.rgba(1, 1, 1, 0.07)
 
                     RowLayout {
                         anchors.fill: parent
@@ -183,14 +195,14 @@ Item {
                         anchors.rightMargin: 12
                         spacing: 10
 
-                        // Checkbox
+                        // Custom Checkbox
                         Rectangle {
                             implicitWidth: 20
                             implicitHeight: 20
-                            radius: 4
+                            radius: 6
                             color: modelData.completed ? Theme.primary : "transparent"
                             border.width: 1.5
-                            border.color: modelData.completed ? Theme.primary : Theme.textMuted
+                            border.color: modelData.completed ? Theme.primary : Qt.rgba(1, 1, 1, 0.3)
 
                             MaterialIcon {
                                 anchors.centerIn: parent
@@ -214,7 +226,7 @@ Item {
 
                             Text {
                                 text: modelData.title
-                                color: modelData.completed ? Theme.textMuted : Theme.textPrimary
+                                color: modelData.completed ? Qt.rgba(1, 1, 1, 0.4) : "#ffffff"
                                 font.pixelSize: Theme.fontSM
                                 font.strikeout: modelData.completed
                                 elide: Text.ElideRight
@@ -227,10 +239,11 @@ Item {
                                     text: modelData.category
                                     color: Theme.primary
                                     font.pixelSize: 10
+                                    font.weight: Font.DemiBold
                                 }
                                 Text {
                                     text: modelData.date
-                                    color: Theme.textMuted
+                                    color: Qt.rgba(1, 1, 1, 0.4)
                                     font.pixelSize: 10
                                 }
                             }
@@ -240,14 +253,14 @@ Item {
                         Rectangle {
                             implicitWidth: 24
                             implicitHeight: 24
-                            radius: Theme.radiusFull
+                            radius: 12
                             color: delMouse.containsMouse ? Qt.rgba(1, 0.3, 0.3, 0.2) : "transparent"
 
                             MaterialIcon {
                                 anchors.centerIn: parent
                                 name: "close"
                                 iconSize: 10
-                                iconColor: delMouse.containsMouse ? "#ff5555" : Theme.textMuted
+                                iconColor: delMouse.containsMouse ? "#ff5555" : Qt.rgba(1, 1, 1, 0.4)
                             }
 
                             MouseArea {

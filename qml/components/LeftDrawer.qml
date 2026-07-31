@@ -13,17 +13,17 @@ Item {
     width: panelWidth
     anchors.top: parent.top
     anchors.bottom: parent.bottom
-    anchors.topMargin: 48
-    anchors.bottomMargin: 48
+    anchors.topMargin: 36
+    anchors.bottomMargin: 36
 
     opacity: open ? 1 : 0
 
     transform: Translate {
-        x: root.open ? 0 : -(root.panelWidth + 32)
+        x: root.open ? 0 : -(root.panelWidth + 40)
         Behavior on x {
             NumberAnimation {
-                duration: Theme.durationDefault
-                easing.type: Easing.OutCubic
+                duration: 260
+                easing.type: Easing.OutExpo
             }
         }
     }
@@ -34,7 +34,7 @@ Item {
     // Hover hit zone
     MouseArea {
         anchors.fill: parent
-        anchors.margins: -24
+        anchors.margins: -30
         z: 999
         hoverEnabled: true
         acceptedButtons: Qt.NoButton
@@ -43,44 +43,56 @@ Item {
 
     GlassPanel {
         anchors.fill: parent
-        anchors.leftMargin: 16
-        tint: Theme.surface
+        anchors.leftMargin: 20
+        tint: Qt.rgba(0.08, 0.08, 0.12, 0.92)
         elevated: true
+        radius: 24
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: Theme.paddingLG
-            spacing: Theme.spacingMD
+            anchors.margins: 18
+            spacing: 12
 
-            // Header
+            // Header Badge
             RowLayout {
                 Layout.fillWidth: true
-                spacing: Theme.spacingSM
+                spacing: 10
 
-                MaterialIcon {
-                    name: "bot"
-                    iconSize: 22
+                Rectangle {
+                    implicitWidth: 34
+                    implicitHeight: 34
+                    radius: 17
+                    color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.2)
+                    border.width: 1
+                    border.color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.4)
+
+                    MaterialIcon {
+                        anchors.centerIn: parent
+                        name: "bot"
+                        iconSize: 18
+                        iconColor: Theme.primary
+                    }
                 }
 
                 Text {
                     text: "Bloom AI Assistant"
-                    color: Theme.textPrimary
+                    color: "#ffffff"
                     font.pixelSize: Theme.fontLG
                     font.weight: Font.Bold
                     Layout.fillWidth: true
                 }
 
                 Rectangle {
-                    implicitWidth: 32
-                    implicitHeight: 32
-                    radius: Theme.radiusFull
-                    color: trashMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : "transparent"
+                    implicitWidth: 30
+                    implicitHeight: 30
+                    radius: 15
+                    color: trashMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : "transparent"
 
                     MaterialIcon {
                         anchors.centerIn: parent
                         name: "trash"
                         iconSize: 14
-                        iconColor: Theme.textMuted
+                        iconColor: Qt.rgba(1, 1, 1, 0.5)
                     }
 
                     MouseArea {
@@ -96,10 +108,10 @@ Item {
             Rectangle {
                 Layout.fillWidth: true
                 height: 1
-                color: Qt.rgba(1, 1, 1, 0.08)
+                color: Qt.rgba(1, 1, 1, 0.06)
             }
 
-            // Quick Actions Chips
+            // Quick Prompt Chips
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 6
@@ -110,8 +122,8 @@ Item {
                     Rectangle {
                         implicitWidth: chipText.implicitWidth + 16
                         implicitHeight: 26
-                        radius: Theme.radiusFull
-                        color: chipMouse.containsMouse ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.2)
+                        radius: 13
+                        color: chipMouse.containsMouse ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.25)
                                                         : Qt.rgba(1, 1, 1, 0.04)
                         border.width: 1
                         border.color: Qt.rgba(1, 1, 1, 0.08)
@@ -120,7 +132,7 @@ Item {
                             id: chipText
                             anchors.centerIn: parent
                             text: modelData
-                            color: Theme.textSecondary
+                            color: Qt.rgba(1, 1, 1, 0.8)
                             font.pixelSize: 11
                         }
 
@@ -135,13 +147,13 @@ Item {
                 }
             }
 
-            // Message History ListView
+            // Messages ListView
             ListView {
                 id: listView
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
-                spacing: Theme.spacingSM
+                spacing: 10
                 model: aiService.messages
 
                 delegate: RowLayout {
@@ -149,19 +161,18 @@ Item {
                     spacing: 8
 
                     readonly property bool isUser: modelData.sender === "user"
-
                     Layout.alignment: isUser ? Qt.AlignRight : Qt.AlignLeft
 
                     Rectangle {
-                        Layout.maximumWidth: listView.width * 0.8
+                        Layout.maximumWidth: listView.width * 0.82
                         implicitWidth: msgCol.implicitWidth + 24
                         implicitHeight: msgCol.implicitHeight + 16
-                        radius: Theme.radiusMedium
-                        color: isUser ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.25)
-                                      : Qt.rgba(1, 1, 1, 0.05)
+                        radius: 16
+                        color: isUser ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.28)
+                                      : Qt.rgba(1, 1, 1, 0.06)
                         border.width: 1
-                        border.color: isUser ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.4)
-                                             : Qt.rgba(1, 1, 1, 0.08)
+                        border.color: isUser ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.45)
+                                             : Qt.rgba(1, 1, 1, 0.09)
 
                         ColumnLayout {
                             id: msgCol
@@ -171,7 +182,7 @@ Item {
 
                             Text {
                                 text: modelData.text
-                                color: Theme.textPrimary
+                                color: "#ffffff"
                                 font.pixelSize: Theme.fontSM
                                 wrapMode: Text.Wrap
                                 Layout.fillWidth: true
@@ -179,7 +190,7 @@ Item {
 
                             Text {
                                 text: modelData.time
-                                color: Theme.textMuted
+                                color: Qt.rgba(1, 1, 1, 0.4)
                                 font.pixelSize: 9
                                 Layout.alignment: isUser ? Qt.AlignRight : Qt.AlignLeft
                             }
@@ -207,29 +218,29 @@ Item {
             // Input Area
             RowLayout {
                 Layout.fillWidth: true
-                spacing: Theme.spacingXS
+                spacing: 8
 
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: 38
-                    radius: Theme.radiusMedium
-                    color: Qt.rgba(1, 1, 1, 0.04)
+                    radius: 19
+                    color: Qt.rgba(0, 0, 0, 0.35)
                     border.width: 1
                     border.color: promptInput.activeFocus ? Theme.primary : Qt.rgba(1, 1, 1, 0.1)
 
                     TextInput {
                         id: promptInput
                         anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
+                        anchors.leftMargin: 14
+                        anchors.rightMargin: 14
                         verticalAlignment: TextInput.AlignVCenter
-                        color: Theme.textPrimary
+                        color: "#ffffff"
                         font.pixelSize: Theme.fontSM
                         clip: true
 
                         Text {
                             text: "AIにメッセージを送信..."
-                            color: Theme.textMuted
+                            color: Qt.rgba(1, 1, 1, 0.35)
                             font.pixelSize: Theme.fontSM
                             visible: !promptInput.text && !promptInput.activeFocus
                             anchors.verticalCenter: parent.verticalCenter
@@ -247,8 +258,8 @@ Item {
                 Rectangle {
                     implicitWidth: 38
                     implicitHeight: 38
-                    radius: Theme.radiusMedium
-                    color: sendMouse.containsMouse ? Theme.primary : Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.7)
+                    radius: 19
+                    color: sendMouse.containsMouse ? Theme.primary : Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.75)
 
                     MaterialIcon {
                         anchors.centerIn: parent
