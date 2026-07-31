@@ -288,26 +288,18 @@ Item {
                     RowLayout {
                         spacing: 12
                         MetricRing {
-                            size: 54
-                            value: systemInfo.cpuUsage / 100.0
-                            color: Theme.primary
-                        }
-                        ColumnLayout {
-                            Text { text: "CPU"; color: Qt.rgba(1, 1, 1, 0.5); font.pixelSize: 11 }
-                            Text { text: systemInfo.cpuUsage + "%"; color: "#ffffff"; font.pixelSize: 16; font.weight: Font.Bold }
+                            label: "CPU"
+                            value: systemInfo.cpuUsage
+                            accent: Theme.primary
                         }
                     }
 
                     RowLayout {
                         spacing: 12
                         MetricRing {
-                            size: 54
-                            value: systemInfo.ramUsage / 100.0
-                            color: "#cba6f7"
-                        }
-                        ColumnLayout {
-                            Text { text: "RAM"; color: Qt.rgba(1, 1, 1, 0.5); font.pixelSize: 11 }
-                            Text { text: systemInfo.ramUsage + "%"; color: "#ffffff"; font.pixelSize: 16; font.weight: Font.Bold }
+                            label: "RAM"
+                            value: systemInfo.ramUsage
+                            accent: "#cba6f7"
                         }
                     }
                 }
