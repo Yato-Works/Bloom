@@ -53,6 +53,7 @@ private:
     QTimer m_pollTimer;
     bool m_armed {false};
     bool m_locked {false};
+    bool m_spaceWasPressed {false};
     bool m_useWinShift {false};
     QString m_statusText;
 };

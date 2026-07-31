@@ -61,10 +61,10 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         anchors.topMargin: 16
-        width: Math.min(parent.width * 0.75, 880)
+        width: Math.min(parent.width * 0.78, 880)
         implicitHeight: 180
         radius: 24
-        tint: Qt.rgba(0.08, 0.08, 0.12, 0.90)
+        tint: Qt.rgba(0.08, 0.08, 0.12, 0.92)
         elevated: true
 
         ColumnLayout {
@@ -102,7 +102,7 @@ Item {
                                 implicitWidth: tabRow.implicitWidth + 24
                                 implicitHeight: 34
 
-                                property bool isActive: root.currentTab === index
+                                readonly property bool isActive: root.currentTab === index
 
                                 RowLayout {
                                     id: tabRow
@@ -136,9 +136,9 @@ Item {
                         id: pillIndicator
                         height: 34
                         radius: 17
-                        color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.22)
+                        color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.24)
                         border.width: 1
-                        border.color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.45)
+                        border.color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.48)
                         z: -1
 
                         property Item targetTabItem: tabsRow.children[root.currentTab] || null
@@ -183,7 +183,7 @@ Item {
                             font.family: "Segoe UI"
                         }
                         Text {
-                            text: systemInfo.formattedDate
+                            text: systemInfo.formattedDate + " · Welcome to Caelestia Bloom"
                             color: Qt.rgba(1, 1, 1, 0.6)
                             font.pixelSize: Theme.fontMD
                         }
@@ -225,7 +225,9 @@ Item {
                         implicitWidth: 54
                         implicitHeight: 54
                         radius: 12
-                        color: Qt.rgba(1, 1, 1, 0.08)
+                        color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.2)
+                        border.width: 1
+                        border.color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.4)
 
                         Text {
                             anchors.centerIn: parent
@@ -236,7 +238,8 @@ Item {
 
                     ColumnLayout {
                         Layout.fillWidth: true
-                        spacing: 2
+                        spacing: 4
+
                         Text {
                             text: musicControl.trackTitle !== "" ? musicControl.trackTitle : "再生中の曲はありません"
                             color: "#ffffff"
@@ -248,6 +251,13 @@ Item {
                             text: musicControl.artistName !== "" ? musicControl.artistName : "Caelestia Audio Player"
                             color: Qt.rgba(1, 1, 1, 0.6)
                             font.pixelSize: Theme.fontSM
+                        }
+
+                        // Playback Progress Bar Indicator
+                        ProgressBar {
+                            Layout.fillWidth: true
+                            implicitHeight: 4
+                            value: 0.45
                         }
                     }
 

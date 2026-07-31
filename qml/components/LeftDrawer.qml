@@ -10,6 +10,16 @@ Item {
 
     readonly property int panelWidth: 360
 
+    // Internal System Control State
+    property int volumeLevel: 72
+    property bool isMuted: false
+    property int brightnessLevel: 85
+
+    property bool wifiEnabled: true
+    property bool bluetoothEnabled: true
+    property bool nightLightEnabled: false
+    property bool powerSaverEnabled: false
+
     width: panelWidth
     anchors.top: parent.top
     anchors.bottom: parent.bottom
@@ -51,7 +61,7 @@ Item {
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 18
-            spacing: 12
+            spacing: 16
 
             // Header Badge
             RowLayout {
@@ -68,40 +78,25 @@ Item {
 
                     MaterialIcon {
                         anchors.centerIn: parent
-                        name: "bot"
+                        name: "⚙"
                         iconSize: 18
                         iconColor: Theme.primary
                     }
                 }
 
                 Text {
-                    text: "Bloom AI Assistant"
+                    text: "Control Center"
                     color: "#ffffff"
                     font.pixelSize: Theme.fontLG
                     font.weight: Font.Bold
                     Layout.fillWidth: true
                 }
 
-                Rectangle {
-                    implicitWidth: 30
-                    implicitHeight: 30
-                    radius: 15
-                    color: trashMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : "transparent"
-
-                    MaterialIcon {
-                        anchors.centerIn: parent
-                        name: "trash"
-                        iconSize: 14
-                        iconColor: Qt.rgba(1, 1, 1, 0.5)
-                    }
-
-                    MouseArea {
-                        id: trashMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: aiService.clearHistory()
-                    }
+                Text {
+                    text: "Caelestia"
+                    color: Qt.rgba(1, 1, 1, 0.4)
+                    font.pixelSize: 11
+                    font.weight: Font.DemiBold
                 }
             }
 
@@ -111,177 +106,254 @@ Item {
                 color: Qt.rgba(1, 1, 1, 0.06)
             }
 
-            // Quick Prompt Chips
-            RowLayout {
+            // Volume Control Card
+            Rectangle {
                 Layout.fillWidth: true
-                spacing: 6
+                implicitHeight: 70
+                radius: 16
+                color: Qt.rgba(1, 1, 1, 0.04)
+                border.width: 1
+                border.color: Qt.rgba(1, 1, 1, 0.07)
 
-                Repeater {
-                    model: ["天気は？", "Bloomとは？", "タスク一覧"]
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: 12
+                    spacing: 4
 
-                    Rectangle {
-                        implicitWidth: chipText.implicitWidth + 16
-                        implicitHeight: 26
-                        radius: 13
-                        color: chipMouse.containsMouse ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.25)
-                                                        : Qt.rgba(1, 1, 1, 0.04)
-                        border.width: 1
-                        border.color: Qt.rgba(1, 1, 1, 0.08)
-
+                    RowLayout {
+                        Layout.fillWidth: true
                         Text {
-                            id: chipText
-                            anchors.centerIn: parent
-                            text: modelData
-                            color: Qt.rgba(1, 1, 1, 0.8)
-                            font.pixelSize: 11
+                            text: root.isMuted ? "🔇  Volume (Muted)" : (root.volumeLevel > 50 ? "🔊  Volume" : "🔉  Volume")
+                            color: "#ffffff"
+                            font.pixelSize: Theme.fontSM
+                            font.weight: Font.DemiBold
                         }
-
-                        MouseArea {
-                            id: chipMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: aiService.sendMessage(modelData)
+                        Item { Layout.fillWidth: true }
+                        Text {
+                            text: root.isMuted ? "0%" : root.volumeLevel + "%"
+                            color: Theme.primary
+                            font.pixelSize: Theme.fontSM
+                            font.weight: Font.Bold
                         }
                     }
-                }
-            }
 
-            // Messages ListView
-            ListView {
-                id: listView
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                clip: true
-                spacing: 10
-                model: aiService.messages
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
 
-                delegate: RowLayout {
-                    width: listView.width
-                    spacing: 8
+                        Slider {
+                            id: volSlider
+                            Layout.fillWidth: true
+                            from: 0
+                            to: 100
+                            value: root.volumeLevel
+                            onValueChanged: {
+                                root.volumeLevel = Math.round(value)
+                                if (root.volumeLevel > 0) root.isMuted = false
+                            }
+                        }
 
-                    readonly property bool isUser: modelData.sender === "user"
-                    Layout.alignment: isUser ? Qt.AlignRight : Qt.AlignLeft
-
-                    Rectangle {
-                        Layout.maximumWidth: listView.width * 0.82
-                        implicitWidth: msgCol.implicitWidth + 24
-                        implicitHeight: msgCol.implicitHeight + 16
-                        radius: 16
-                        color: isUser ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.28)
-                                      : Qt.rgba(1, 1, 1, 0.06)
-                        border.width: 1
-                        border.color: isUser ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.45)
-                                             : Qt.rgba(1, 1, 1, 0.09)
-
-                        ColumnLayout {
-                            id: msgCol
-                            anchors.centerIn: parent
-                            width: parent.width - 24
-                            spacing: 4
+                        Rectangle {
+                            implicitWidth: 26
+                            implicitHeight: 26
+                            radius: 13
+                            color: root.isMuted ? Qt.rgba(1, 0.3, 0.3, 0.25) : Qt.rgba(1, 1, 1, 0.08)
 
                             Text {
-                                text: modelData.text
-                                color: "#ffffff"
-                                font.pixelSize: Theme.fontSM
-                                wrapMode: Text.Wrap
-                                Layout.fillWidth: true
+                                anchors.centerIn: parent
+                                text: root.isMuted ? "🔇" : "🔊"
+                                font.pixelSize: 12
                             }
 
-                            Text {
-                                text: modelData.time
-                                color: Qt.rgba(1, 1, 1, 0.4)
-                                font.pixelSize: 9
-                                Layout.alignment: isUser ? Qt.AlignRight : Qt.AlignLeft
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.isMuted = !root.isMuted
                             }
                         }
                     }
                 }
-
-                onCountChanged: listView.positionViewAtEnd()
             }
 
-            // Generating indicator
-            RowLayout {
+            // Brightness Control Card
+            Rectangle {
                 Layout.fillWidth: true
-                visible: aiService.isGenerating
-                spacing: 8
+                implicitHeight: 70
+                radius: 16
+                color: Qt.rgba(1, 1, 1, 0.04)
+                border.width: 1
+                border.color: Qt.rgba(1, 1, 1, 0.07)
 
-                Text {
-                    text: "AIが応答を生成中..."
-                    color: Theme.primary
-                    font.pixelSize: Theme.fontXS
-                    font.italic: true
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: 12
+                    spacing: 4
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Text {
+                            text: "☀️  Brightness"
+                            color: "#ffffff"
+                            font.pixelSize: Theme.fontSM
+                            font.weight: Font.DemiBold
+                        }
+                        Item { Layout.fillWidth: true }
+                        Text {
+                            text: root.brightnessLevel + "%"
+                            color: "#cba6f7"
+                            font.pixelSize: Theme.fontSM
+                            font.weight: Font.Bold
+                        }
+                    }
+
+                    Slider {
+                        id: brightSlider
+                        Layout.fillWidth: true
+                        from: 10
+                        to: 100
+                        value: root.brightnessLevel
+                        onValueChanged: root.brightnessLevel = Math.round(value)
+                    }
                 }
             }
 
-            // Input Area
-            RowLayout {
+            // Caelestia Quick Toggles Grid (2x2)
+            GridLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                columns: 2
+                columnSpacing: 10
+                rowSpacing: 10
 
+                // Toggle 1: Wi-Fi
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 38
-                    radius: 19
-                    color: Qt.rgba(0, 0, 0, 0.35)
+                    implicitHeight: 50
+                    radius: 14
+                    color: root.wifiEnabled ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.2)
+                                            : Qt.rgba(1, 1, 1, 0.04)
                     border.width: 1
-                    border.color: promptInput.activeFocus ? Theme.primary : Qt.rgba(1, 1, 1, 0.1)
+                    border.color: root.wifiEnabled ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.4)
+                                                   : Qt.rgba(1, 1, 1, 0.08)
 
-                    TextInput {
-                        id: promptInput
+                    RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: 14
-                        anchors.rightMargin: 14
-                        verticalAlignment: TextInput.AlignVCenter
-                        color: "#ffffff"
-                        font.pixelSize: Theme.fontSM
-                        clip: true
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        spacing: 8
 
-                        Text {
-                            text: "AIにメッセージを送信..."
-                            color: Qt.rgba(1, 1, 1, 0.35)
-                            font.pixelSize: Theme.fontSM
-                            visible: !promptInput.text && !promptInput.activeFocus
-                            anchors.verticalCenter: parent.verticalCenter
+                        Text { text: "📶"; font.pixelSize: 16 }
+                        ColumnLayout {
+                            spacing: 0
+                            Text { text: "Wi-Fi"; color: "#ffffff"; font.pixelSize: 12; font.weight: Font.Bold }
+                            Text { text: root.wifiEnabled ? "Connected" : "Off"; color: Qt.rgba(1, 1, 1, 0.5); font.pixelSize: 10 }
                         }
-
-                        onAccepted: {
-                            if (promptInput.text.length > 0) {
-                                aiService.sendMessage(promptInput.text)
-                                promptInput.text = ""
-                            }
-                        }
-                    }
-                }
-
-                Rectangle {
-                    implicitWidth: 38
-                    implicitHeight: 38
-                    radius: 19
-                    color: sendMouse.containsMouse ? Theme.primary : Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.75)
-
-                    MaterialIcon {
-                        anchors.centerIn: parent
-                        name: "send"
-                        iconSize: 14
-                        iconColor: "#ffffff"
                     }
 
                     MouseArea {
-                        id: sendMouse
                         anchors.fill: parent
-                        hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            if (promptInput.text.length > 0) {
-                                aiService.sendMessage(promptInput.text)
-                                promptInput.text = ""
-                            }
+                        onClicked: root.wifiEnabled = !root.wifiEnabled
+                    }
+                }
+
+                // Toggle 2: Bluetooth
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 50
+                    radius: 14
+                    color: root.bluetoothEnabled ? Qt.rgba(0.5, 0.7, 1.0, 0.2)
+                                                 : Qt.rgba(1, 1, 1, 0.04)
+                    border.width: 1
+                    border.color: root.bluetoothEnabled ? Qt.rgba(0.5, 0.7, 1.0, 0.4)
+                                                        : Qt.rgba(1, 1, 1, 0.08)
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        spacing: 8
+
+                        Text { text: "🌐"; font.pixelSize: 16 }
+                        ColumnLayout {
+                            spacing: 0
+                            Text { text: "Bluetooth"; color: "#ffffff"; font.pixelSize: 12; font.weight: Font.Bold }
+                            Text { text: root.bluetoothEnabled ? "On" : "Off"; color: Qt.rgba(1, 1, 1, 0.5); font.pixelSize: 10 }
                         }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.bluetoothEnabled = !root.bluetoothEnabled
+                    }
+                }
+
+                // Toggle 3: Night Light
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 50
+                    radius: 14
+                    color: root.nightLightEnabled ? Qt.rgba(1.0, 0.7, 0.3, 0.2)
+                                                   : Qt.rgba(1, 1, 1, 0.04)
+                    border.width: 1
+                    border.color: root.nightLightEnabled ? Qt.rgba(1.0, 0.7, 0.3, 0.4)
+                                                          : Qt.rgba(1, 1, 1, 0.08)
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        spacing: 8
+
+                        Text { text: "🌙"; font.pixelSize: 16 }
+                        ColumnLayout {
+                            spacing: 0
+                            Text { text: "Night Light"; color: "#ffffff"; font.pixelSize: 12; font.weight: Font.Bold }
+                            Text { text: root.nightLightEnabled ? "Active" : "Off"; color: Qt.rgba(1, 1, 1, 0.5); font.pixelSize: 10 }
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.nightLightEnabled = !root.nightLightEnabled
+                    }
+                }
+
+                // Toggle 4: Power Saver
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 50
+                    radius: 14
+                    color: root.powerSaverEnabled ? Qt.rgba(0.4, 0.9, 0.5, 0.2)
+                                                  : Qt.rgba(1, 1, 1, 0.04)
+                    border.width: 1
+                    border.color: root.powerSaverEnabled ? Qt.rgba(0.4, 0.9, 0.5, 0.4)
+                                                         : Qt.rgba(1, 1, 1, 0.08)
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        spacing: 8
+
+                        Text { text: "🔋"; font.pixelSize: 16 }
+                        ColumnLayout {
+                            spacing: 0
+                            Text { text: "Power Saver"; color: "#ffffff"; font.pixelSize: 12; font.weight: Font.Bold }
+                            Text { text: root.powerSaverEnabled ? "Saving" : "Normal"; color: Qt.rgba(1, 1, 1, 0.5); font.pixelSize: 10 }
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.powerSaverEnabled = !root.powerSaverEnabled
                     }
                 }
             }
+
+            Item { Layout.fillHeight: true }
         }
     }
 }

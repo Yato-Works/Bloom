@@ -74,7 +74,28 @@ bool ShellController::isHoldChordDown() const
 
 void ShellController::poll()
 {
-    setArmed(isHoldChordDown());
+    const bool chord = isHoldChordDown();
+#ifdef Q_OS_WIN
+    const bool space = (GetAsyncKeyState(VK_SPACE) & 0x8000) != 0;
+    const bool esc = (GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0;
+#else
+    const bool space = false;
+    const bool esc = false;
+#endif
+
+    if (esc) {
+        setLocked(false);
+        setArmed(false);
+        return;
+    }
+
+    if ((m_armed || chord) && space && !m_spaceWasPressed) {
+        toggleLock();
+    }
+    m_spaceWasPressed = space;
+
+    const bool shouldBeArmed = chord || m_locked;
+    setArmed(shouldBeArmed);
 }
 
 void ShellController::setLocked(bool locked)
@@ -98,9 +119,6 @@ void ShellController::setArmed(bool armed)
     }
 
     m_armed = armed;
-    if (!m_armed) {
-        setLocked(false);
-    }
     emit armedChanged();
 
     if (!m_window) {
