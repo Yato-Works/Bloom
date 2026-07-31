@@ -7,16 +7,19 @@ Item {
     id: root
     property bool open: false
     property bool panelHovered: false
-    property int currentTab: 0
 
-    readonly property int panelHeight: 260
+    readonly property int panelHeight: 250
 
     height: panelHeight
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+
     opacity: open ? 1 : 0
 
     transform: [
         Translate {
-            y: root.open ? 0 : root.panelHeight + 24
+            y: root.open ? 0 : (root.panelHeight + 30)
             Behavior on y {
                 NumberAnimation {
                     duration: Theme.durationDefault
@@ -25,9 +28,10 @@ Item {
             }
         },
         Scale {
-            origin.y: 0
-            xScale: root.open ? 1.0 : 0.97
-            yScale: root.open ? 1.0 : 0.97
+            origin.x: root.width / 2
+            origin.y: root.panelHeight
+            xScale: root.open ? 1.0 : 0.95
+            yScale: root.open ? 1.0 : 0.95
             Behavior on xScale {
                 NumberAnimation { duration: Theme.durationDefault; easing.type: Easing.OutCubic }
             }
@@ -40,426 +44,191 @@ Item {
         NumberAnimation { duration: Theme.durationFast }
     }
 
+    // Hover hit zone
     MouseArea {
         anchors.fill: parent
-        anchors.margins: -40
+        anchors.margins: -30
         z: 999
         hoverEnabled: true
         acceptedButtons: Qt.NoButton
         onContainsMouseChanged: root.panelHovered = containsMouse
     }
 
+    // Main Central Floating Widget Container
     GlassPanel {
-        anchors.fill: parent
-        anchors.leftMargin: 32
-        anchors.rightMargin: 32
-        anchors.bottomMargin: 16
-        anchors.topMargin: 0
-        tint: Theme.surface
+        id: widgetContainer
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 24
+        width: Math.min(parent.width * 0.75, 880)
+        implicitHeight: 230
+        radius: 24
+        tint: Qt.rgba(0.08, 0.07, 0.07, 0.92)
         elevated: true
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: Theme.paddingLG
-            spacing: Theme.spacingSM
+            anchors.margins: 18
+            spacing: 14
 
-            // Tab Bar
+            // Wallpaper Carousel View
             RowLayout {
-                spacing: Theme.spacingXS
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                spacing: 16
 
                 Repeater {
-                    model: [
-                        { icon: "🖼", label: "Background" },
-                        { icon: "💻", label: "Workspaces" }
-                    ]
+                    model: wallpaperService.wallpapers
 
                     Item {
-                        id: tabItem
-                        implicitWidth: tabContent.implicitWidth + 24
-                        implicitHeight: 36
+                        id: cardItem
+                        readonly property bool isSelected: wallpaperService.selectedIndex === index
+                        property bool isHovered: cardMouse.containsMouse
 
-                        property bool isActive: root.currentTab === index
+                        implicitWidth: isSelected ? 170 : 130
+                        implicitHeight: isSelected ? 120 : 95
+                        Layout.alignment: Qt.AlignVCenter
 
-                        Rectangle {
+                        z: isSelected ? 10 : (isHovered ? 5 : 1)
+
+                        Behavior on implicitWidth { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                        Behavior on implicitHeight { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+
+                        ColumnLayout {
                             anchors.fill: parent
-                            radius: Theme.radiusFull
-                            color: isActive ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.15)
-                                            : (tabMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : "transparent")
-                            Behavior on color { ColorAnimation { duration: Theme.durationFast } }
-                        }
-
-                        RowLayout {
-                            id: tabContent
-                            anchors.centerIn: parent
                             spacing: 6
 
-                            Text {
-                                text: modelData.icon
-                                font.pixelSize: 14
-                                color: tabItem.isActive ? Theme.primary : Theme.textMuted
-                            }
-                            Text {
-                                text: modelData.label
-                                color: tabItem.isActive ? Theme.text : Theme.textMuted
-                                font.pixelSize: Theme.fontSM
-                                font.weight: tabItem.isActive ? Font.DemiBold : Font.Normal
-                            }
-                        }
+                            // Thumbnail Container
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                radius: 14
+                                clip: true
+                                color: modelData.colorStart
+                                border.width: cardItem.isSelected ? 2 : (cardItem.isHovered ? 1 : 0)
+                                border.color: cardItem.isSelected ? Qt.rgba(1, 1, 1, 0.4) : Qt.rgba(1, 1, 1, 0.2)
 
-                        Rectangle {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.bottom: parent.bottom
-                            anchors.bottomMargin: -4
-                            width: isActive ? 20 : 0
-                            height: 3
-                            radius: 1.5
-                            color: Theme.primary
-                            opacity: isActive ? 1 : 0
-                            Behavior on width { NumberAnimation { duration: Theme.durationFast } }
-                            Behavior on opacity { NumberAnimation { duration: Theme.durationFast } }
+                                // Gradient Background Thumbnail
+                                Rectangle {
+                                    anchors.fill: parent
+                                    gradient: Gradient {
+                                        GradientStop { position: 0.0; color: modelData.colorStart }
+                                        GradientStop { position: 1.0; color: modelData.colorEnd }
+                                    }
+                                }
+
+                                // Visual Placeholder Pattern
+                                ColumnLayout {
+                                    anchors.centerIn: parent
+                                    spacing: 4
+                                    opacity: cardItem.isSelected ? 0.9 : 0.6
+
+                                    MaterialIcon {
+                                        name: "sparkles"
+                                        iconSize: cardItem.isSelected ? 24 : 18
+                                        iconColor: "#ffffff"
+                                        Layout.alignment: Qt.AlignHCenter
+                                    }
+
+                                    Text {
+                                        text: modelData.name
+                                        color: "#ffffff"
+                                        font.pixelSize: cardItem.isSelected ? 11 : 9
+                                        font.weight: Font.DemiBold
+                                        Layout.alignment: Qt.AlignHCenter
+                                    }
+                                }
+                            }
+
+                            // Caption Label Under Card
+                            Text {
+                                text: modelData.fileName
+                                color: cardItem.isSelected ? "#ffffff" : Qt.rgba(1, 1, 1, 0.5)
+                                font.pixelSize: cardItem.isSelected ? 11 : 10
+                                font.weight: cardItem.isSelected ? Font.Bold : Font.Normal
+                                horizontalAlignment: Text.AlignHCenter
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                            }
                         }
 
                         MouseArea {
-                            id: tabMouse
+                            id: cardMouse
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: root.currentTab = index
+                            onClicked: wallpaperService.selectedIndex = index
                         }
                     }
                 }
-
-                Item { Layout.fillWidth: true }
-
-                Text {
-                    text: root.currentTab === 0 ? (wallpaperService.wallpaperNames.length + " items")
-                                             : (workspaceService.workspaceNames.length + " workspaces")
-                    color: Theme.textMuted
-                    font.pixelSize: Theme.fontXS
-                    anchors.verticalCenter: parent.verticalCenter
-                }
             }
 
-            // Separator
+            // Bottom Minimal Command/Search Bar
             Rectangle {
                 Layout.fillWidth: true
-                height: 1
-                color: Qt.rgba(1, 1, 1, 0.06)
-            }
+                implicitHeight: 38
+                radius: 19
+                color: Qt.rgba(0, 0, 0, 0.45)
+                border.width: 1
+                border.color: cmdInput.activeFocus ? Qt.rgba(1, 1, 1, 0.25) : Qt.rgba(1, 1, 1, 0.08)
 
-            // Tab Content
-            StackLayout {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                currentIndex: root.currentTab
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 14
+                    anchors.rightMargin: 14
+                    spacing: 8
 
-                // Background Tab
-                Item {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
+                    MaterialIcon {
+                        name: "🔍"
+                        iconSize: 14
+                        iconColor: Qt.rgba(1, 1, 1, 0.5)
+                    }
 
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: 4
-                        spacing: Theme.spacingSM
+                    Text {
+                        text: ">wallpaper"
+                        color: Qt.rgba(1, 1, 1, 0.85)
+                        font.pixelSize: 12
+                        font.weight: Font.DemiBold
+                    }
 
-                        // Wallpaper cards
-                        Flickable {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            contentWidth: bgRow.implicitWidth
-                            contentHeight: bgRow.implicitHeight
-                            clip: true
-                            ScrollBar.horizontal: ScrollBar {
-                                policy: ScrollBar.AsNeeded
-                                visible: false
-                            }
+                    TextInput {
+                        id: cmdInput
+                        Layout.fillWidth: true
+                        verticalAlignment: TextInput.AlignVCenter
+                        color: "#ffffff"
+                        font.pixelSize: 12
+                        clip: true
 
-                            RowLayout {
-                                id: bgRow
-                                spacing: Theme.spacingSM
-
-                                Repeater {
-                                    model: wallpaperService.wallpaperNames
-
-                                    Rectangle {
-                                        implicitWidth: 140
-                                        implicitHeight: 100
-                                        radius: Theme.radiusMedium
-                                        color: Qt.rgba(1, 1, 1, 0.03)
-                                        border.width: wallpaperService.currentWallpaper === modelData ? 2 : 1
-                                        border.color: wallpaperService.currentWallpaper === modelData
-                                                       ? Theme.primary : Qt.rgba(1, 1, 1, 0.06)
-
-                                        Behavior on border.color { ColorAnimation { duration: Theme.durationFast } }
-
-                                        ColumnLayout {
-                                            anchors.centerIn: parent
-                                            spacing: Theme.spacingXS
-
-                                            Text {
-                                                text: "🖼"
-                                                font.pixelSize: 28
-                                                Layout.alignment: Qt.AlignHCenter
-                                            }
-                                            Text {
-                                                text: modelData
-                                                color: wallpaperService.currentWallpaper === modelData ? Theme.text : Theme.textMuted
-                                                font.pixelSize: Theme.fontXS
-                                                font.weight: wallpaperService.currentWallpaper === modelData ? Font.DemiBold : Font.Normal
-                                                elide: Text.ElideRight
-                                                Layout.alignment: Qt.AlignHCenter
-                                                Layout.maximumWidth: 120
-                                            }
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: wallpaperService.setWallpaper(modelData)
-                                            onEntered: parent.scale = 1.03
-                                            onExited: parent.scale = 1.0
-                                            Behavior on scale { NumberAnimation { duration: Theme.durationFast } }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        // Wallpaper path input
-                        Rectangle {
-                            Layout.fillWidth: true
-                            implicitHeight: 44
-                            color: Qt.rgba(1, 1, 1, 0.03)
-                            border.color: Qt.rgba(1, 1, 1, 0.06)
-                            border.width: 1
-                            radius: Theme.radiusMedium
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.margins: 4
-                                spacing: Theme.spacingSM
-
-                                TextField {
-                                    id: pathField
-                                    Layout.fillWidth: true
-                                    placeholderText: "Wallpaper path..."
-                                    background: Rectangle { color: "transparent" }
-                                    font.pixelSize: Theme.fontSM
-                                    color: Theme.text
-                                    onAccepted: wallpaperService.setWallpaper(text)
-                                }
-
-                                Button {
-                                    text: "Apply"
-                                    flat: true
-                                    implicitHeight: 32
-                                    implicitWidth: 64
-                                    contentItem: Text {
-                                        text: "Apply"
-                                        color: Theme.onPrimary
-                                        font.pixelSize: Theme.fontSM
-                                        font.weight: Font.DemiBold
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
-                                    }
-                                    background: Rectangle {
-                                        radius: Theme.radiusFull
-                                        color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.85)
-                                    }
-                                    onClicked: wallpaperService.setWallpaper(pathField.text)
-                                }
-                            }
+                        Text {
+                            text: " 検索またはコマンドを入力..."
+                            color: Qt.rgba(1, 1, 1, 0.3)
+                            font.pixelSize: 12
+                            visible: !cmdInput.text && !cmdInput.activeFocus
+                            anchors.verticalCenter: parent.verticalCenter
                         }
                     }
-                }
 
-                // Workspaces Tab
-                Item {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
+                    Rectangle {
+                        implicitWidth: 20
+                        implicitHeight: 20
+                        radius: 10
+                        color: clearMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : "transparent"
+                        visible: cmdInput.text.length > 0
 
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: 4
-                        spacing: Theme.spacingSM
-
-                        // Workspace cards area
-                        Flickable {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            contentWidth: wsRow.implicitWidth
-                            contentHeight: wsRow.implicitHeight
-                            clip: true
-                            ScrollBar.horizontal: ScrollBar {
-                                policy: ScrollBar.AsNeeded
-                                visible: false
-                            }
-
-                            RowLayout {
-                                id: wsRow
-                                spacing: Theme.spacingSM
-
-                                Repeater {
-                                    model: workspaceService.workspaceNames
-
-                                    Rectangle {
-                                        implicitWidth: 130
-                                        implicitHeight: 80
-                                        radius: Theme.radiusMedium
-                                        color: Qt.rgba(1, 1, 1, 0.03)
-                                        border.width: 1
-                                        border.color: Qt.rgba(1, 1, 1, 0.06)
-
-                                        ColumnLayout {
-                                            anchors.centerIn: parent
-                                            spacing: Theme.spacingXS
-
-                                            Text {
-                                                text: "💻"
-                                                font.pixelSize: 24
-                                                Layout.alignment: Qt.AlignHCenter
-                                            }
-                                            Text {
-                                                text: modelData
-                                                color: Theme.text
-                                                font.pixelSize: Theme.fontSM
-                                                font.weight: Font.DemiBold
-                                                elide: Text.ElideRight
-                                                Layout.alignment: Qt.AlignHCenter
-                                                Layout.maximumWidth: 110
-                                            }
-                                        }
-
-                                        // Restore overlay
-                                        Rectangle {
-                                            anchors.fill: parent
-                                            radius: Theme.radiusMedium
-                                            color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.1)
-                                            opacity: wsMouse.containsMouse ? 1 : 0
-                                            Behavior on opacity { NumberAnimation { duration: Theme.durationFast } }
-
-                                            Text {
-                                                anchors.centerIn: parent
-                                                text: "Restore"
-                                                color: Theme.primary
-                                                font.pixelSize: Theme.fontSM
-                                                font.weight: Font.DemiBold
-                                            }
-                                        }
-
-                                        MouseArea {
-                                            id: wsMouse
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: workspaceService.restoreWorkspace(modelData)
-                                            onEntered: parent.scale = 1.03
-                                            onExited: parent.scale = 1.0
-                                            Behavior on scale { NumberAnimation { duration: Theme.durationFast } }
-                                        }
-                                    }
-                                }
-
-                                // Add new workspace card
-                                Rectangle {
-                                    implicitWidth: 130
-                                    implicitHeight: 80
-                                    radius: Theme.radiusMedium
-                                    color: Qt.rgba(1, 1, 1, 0.02)
-                                    border.width: 1
-                                    border.color: Qt.rgba(1, 1, 1, 0.06)
-
-                                    ColumnLayout {
-                                        anchors.centerIn: parent
-                                        spacing: Theme.spacingXS
-
-                                        Text {
-                                            text: "+"
-                                            color: Theme.textMuted
-                                            font.pixelSize: 28
-                                            font.weight: Font.Light
-                                            Layout.alignment: Qt.AlignHCenter
-                                        }
-                                        Text {
-                                            text: "New"
-                                            color: Theme.textMuted
-                                            font.pixelSize: Theme.fontXS
-                                            Layout.alignment: Qt.AlignHCenter
-                                        }
-                                    }
-
-                                    TextField {
-                                        id: newWsField
-                                        anchors.fill: parent
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
-                                        placeholderText: "Name..."
-                                        color: Theme.text
-                                        font.pixelSize: Theme.fontSM
-                                        background: Rectangle { color: "transparent"; radius: Theme.radiusMedium }
-                                        visible: false
-                                        onAccepted: {
-                                            workspaceService.saveWorkspace(text.trim())
-                                            text = ""
-                                            visible = false
-                                        }
-                                    }
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            newWsField.visible = true
-                                            newWsField.forceActiveFocus()
-                                        }
-                                        onEntered: parent.scale = 1.03
-                                        onExited: parent.scale = 1.0
-                                        Behavior on scale { NumberAnimation { duration: Theme.durationFast } }
-                                    }
-                                }
-                            }
+                        MaterialIcon {
+                            anchors.centerIn: parent
+                            name: "close"
+                            iconSize: 10
+                            iconColor: Qt.rgba(1, 1, 1, 0.6)
                         }
 
-                        // Status and controls
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: Theme.spacingSM
-
-                            Text {
-                                Layout.fillWidth: true
-                                text: workspaceService.statusText
-                                color: Theme.textMuted
-                                font.pixelSize: Theme.fontXS
-                                wrapMode: Text.WordWrap
-                                Layout.maximumHeight: 32
-                                elide: Text.ElideRight
-                            }
-
-                            Button {
-                                text: "Save Current"
-                                implicitHeight: 30
-                                implicitWidth: 96
-                                contentItem: Text {
-                                    text: "Save Current"
-                                    color: Theme.onPrimary
-                                    font.pixelSize: Theme.fontXS
-                                    font.weight: Font.DemiBold
-                                    horizontalAlignment: Text.AlignHCenter
-                                }
-                                background: Rectangle {
-                                    radius: Theme.radiusFull
-                                    color: parent.hovered ? Qt.lighter(Theme.primary, 1.1) : Theme.primary
-                                }
-                                onClicked: {
-                                    var name = workspaceService.workspaceNames.length > 0
-                                        ? "Workspace " + (workspaceService.workspaceNames.length + 1)
-                                        : "Workspace 1"
-                                    workspaceService.saveWorkspace(name)
-                                }
-                            }
+                        MouseArea {
+                            id: clearMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: cmdInput.text = ""
                         }
                     }
                 }

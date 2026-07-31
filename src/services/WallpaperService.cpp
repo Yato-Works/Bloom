@@ -1,4 +1,4 @@
-﻿#include "WallpaperService.h"
+#include "WallpaperService.h"
 
 #include <QDir>
 #include <QFile>
@@ -40,6 +40,8 @@ QStringList imageFilters()
 WallpaperService::WallpaperService(QObject *parent)
     : QObject(parent)
 {
+    loadDefaultWallpapers();
+
     const QStringList roots = defaultGalleryPaths();
     for (const QString &root : roots) {
         QDir dir(root);
@@ -54,6 +56,44 @@ WallpaperService::WallpaperService(QObject *parent)
     }
 
     refreshCurrent();
+}
+
+void WallpaperService::loadDefaultWallpapers()
+{
+    struct DefaultWallpaper {
+        QString name;
+        QString fileName;
+        QString colorStart;
+        QString colorEnd;
+    };
+
+    const QList<DefaultWallpaper> defaults = {
+        {"Deadly", "Deadly.png", "#1a1a1a", "#0d0d0d"},
+        {"Edogawa Ranpo", "Edogawa_Ranpo.jpg", "#2c1f1d", "#4a3532"},
+        {"Fall", "Fall.jpeg", "#0f0f14", "#1f1f2e"},
+        {"Evangelion", "Evangelion.png", "#8a0f0f", "#3a0000"},
+        {"Frieren", "Frieren.jpeg", "#3a4a5a", "#1e2936"}
+    };
+
+    m_wallpapers.clear();
+    for (const auto &item : defaults) {
+        QVariantMap w;
+        w["name"] = item.name;
+        w["fileName"] = item.fileName;
+        w["colorStart"] = item.colorStart;
+        w["colorEnd"] = item.colorEnd;
+        w["path"] = "";
+        m_wallpapers.append(w);
+    }
+    emit wallpapersChanged();
+}
+
+void WallpaperService::setSelectedIndex(int index)
+{
+    if (index >= 0 && index < m_wallpapers.size() && m_selectedIndex != index) {
+        m_selectedIndex = index;
+        emit selectedIndexChanged();
+    }
 }
 
 bool WallpaperService::setWallpaper(const QString &filePath)
