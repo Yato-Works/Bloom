@@ -11,6 +11,8 @@
 #include "WallpaperService.h"
 #include "GlobalShortcutService.h"
 #include "WorkspaceService.h"
+#include "AIService.h"
+#include "NotionService.h"
 
 
 class ServiceManager final : public QObject
@@ -34,6 +36,8 @@ public:
     [[nodiscard]] ConfigService *configService() noexcept;
     [[nodiscard]] GlobalShortcutService *globalShortcutService() noexcept;
     [[nodiscard]] WorkspaceService *workspaceService() noexcept;
+    [[nodiscard]] AIService *aiService() noexcept;
+    [[nodiscard]] NotionService *notionService() noexcept;
 
 
 private:
@@ -47,4 +51,6 @@ private:
     MusicControlService m_musicControlService;
     ConfigService m_configService;
     WorkspaceService m_workspaceService;
+    AIService m_aiService;
+    NotionService m_notionService;
 };

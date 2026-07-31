@@ -26,6 +26,8 @@ qt_add_executable(Bloom
     src/services/ThemeBridge.cpp
     src/services/WallpaperService.cpp
     src/services/WorkspaceService.cpp
+    src/services/AIService.cpp
+    src/services/NotionService.cpp
 )
 
 qt_add_qml_module(Bloom
@@ -40,6 +42,9 @@ qt_add_qml_module(Bloom
         qml/components/BottomShellPanel.qml
         qml/components/MetricRing.qml
         qml/components/ForecastItem.qml
+        qml/components/MaterialIcon.qml
+        qml/components/LeftDrawer.qml
+        qml/components/RightDrawer.qml
 )
 
 target_include_directories(Bloom PRIVATE src)

@@ -62,6 +62,8 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("wallpaperService"), services.wallpaperService());
     engine.rootContext()->setContextProperty(QStringLiteral("globalShortcuts"), services.globalShortcutService());
     engine.rootContext()->setContextProperty(QStringLiteral("workspaceService"), services.workspaceService());
+    engine.rootContext()->setContextProperty(QStringLiteral("aiService"), services.aiService());
+    engine.rootContext()->setContextProperty(QStringLiteral("notionService"), services.notionService());
 
     static ThemeBridge themeBridge;
     engine.rootContext()->setContextProperty(QStringLiteral("Theme"), &themeBridge);

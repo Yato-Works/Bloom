@@ -47,4 +47,6 @@ MusicControlService *ServiceManager::musicControlService() noexcept { return &m_
 ConfigService *ServiceManager::configService() noexcept { return &m_configService; }
 GlobalShortcutService *ServiceManager::globalShortcutService() noexcept { return &m_globalShortcuts; }
 WorkspaceService *ServiceManager::workspaceService() noexcept { return &m_workspaceService; }
+AIService *ServiceManager::aiService() noexcept { return &m_aiService; }
+NotionService *ServiceManager::notionService() noexcept { return &m_notionService; }
 
