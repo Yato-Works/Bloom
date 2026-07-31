@@ -23,7 +23,7 @@ Item {
             Behavior on y {
                 NumberAnimation {
                     duration: Theme.durationDefault
-                    easing.type: Easing.OutCubic
+                    easing.type: Easing.OutExpo
                 }
             }
         },
@@ -33,10 +33,10 @@ Item {
             xScale: root.open ? 1.0 : 0.95
             yScale: root.open ? 1.0 : 0.95
             Behavior on xScale {
-                NumberAnimation { duration: Theme.durationDefault; easing.type: Easing.OutCubic }
+                NumberAnimation { duration: Theme.durationDefault; easing.type: Easing.OutExpo }
             }
             Behavior on yScale {
-                NumberAnimation { duration: Theme.durationDefault; easing.type: Easing.OutCubic }
+                NumberAnimation { duration: Theme.durationDefault; easing.type: Easing.OutExpo }
             }
         }
     ]
@@ -60,7 +60,7 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 24
-        width: Math.min(parent.width * 0.75, 880)
+        width: Math.min(parent.width * 0.78, 880)
         implicitHeight: 230
         radius: 24
         tint: Qt.rgba(0.08, 0.07, 0.07, 0.92)
@@ -69,31 +69,47 @@ Item {
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 18
-            spacing: 14
+            spacing: 12
 
-            // Wallpaper Carousel View
-            RowLayout {
+            // Smooth Sliding Wallpaper ListView Carousel
+            Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                spacing: 16
+                clip: true
 
-                Repeater {
+                ListView {
+                    id: carouselView
+                    anchors.fill: parent
+                    orientation: ListView.Horizontal
+                    spacing: 16
+                    boundsBehavior: Flickable.StopAtBounds
+                    snapMode: ListView.SnapToItem
+                    highlightRangeMode: ListView.ApplyRange
+                    preferredHighlightBegin: (width - 170) / 2
+                    preferredHighlightEnd: (width + 170) / 2
+                    highlightMoveDuration: 260
+
+                    currentIndex: wallpaperService.selectedIndex
+
+                    onCurrentIndexChanged: {
+                        if (wallpaperService.selectedIndex !== currentIndex) {
+                            wallpaperService.selectedIndex = currentIndex
+                        }
+                    }
+
                     model: wallpaperService.wallpapers
 
-                    Item {
+                    delegate: Item {
                         id: cardItem
-                        readonly property bool isSelected: wallpaperService.selectedIndex === index
+                        readonly property bool isSelected: carouselView.currentIndex === index
                         property bool isHovered: cardMouse.containsMouse
 
-                        implicitWidth: isSelected ? 170 : 130
-                        implicitHeight: isSelected ? 120 : 95
-                        Layout.alignment: Qt.AlignVCenter
+                        width: isSelected ? 175 : 135
+                        height: carouselView.height
 
                         z: isSelected ? 10 : (isHovered ? 5 : 1)
 
-                        Behavior on implicitWidth { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                        Behavior on implicitHeight { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                        Behavior on width { NumberAnimation { duration: 220; easing.type: Easing.OutExpo } }
 
                         ColumnLayout {
                             anchors.fill: parent
@@ -107,9 +123,9 @@ Item {
                                 clip: true
                                 color: modelData.colorStart
                                 border.width: cardItem.isSelected ? 2 : (cardItem.isHovered ? 1 : 0)
-                                border.color: cardItem.isSelected ? Qt.rgba(1, 1, 1, 0.4) : Qt.rgba(1, 1, 1, 0.2)
+                                border.color: cardItem.isSelected ? Qt.rgba(1, 1, 1, 0.5) : Qt.rgba(1, 1, 1, 0.2)
 
-                                // Gradient Background Thumbnail
+                                // Gradient Background
                                 Rectangle {
                                     anchors.fill: parent
                                     gradient: Gradient {
@@ -118,11 +134,11 @@ Item {
                                     }
                                 }
 
-                                // Visual Placeholder Pattern
+                                // Placeholder Visual Pattern
                                 ColumnLayout {
                                     anchors.centerIn: parent
                                     spacing: 4
-                                    opacity: cardItem.isSelected ? 0.9 : 0.6
+                                    opacity: cardItem.isSelected ? 0.95 : 0.55
 
                                     MaterialIcon {
                                         name: "sparkles"
@@ -144,7 +160,7 @@ Item {
                             // Caption Label Under Card
                             Text {
                                 text: modelData.fileName
-                                color: cardItem.isSelected ? "#ffffff" : Qt.rgba(1, 1, 1, 0.5)
+                                color: cardItem.isSelected ? "#ffffff" : Qt.rgba(1, 1, 1, 0.45)
                                 font.pixelSize: cardItem.isSelected ? 11 : 10
                                 font.weight: cardItem.isSelected ? Font.Bold : Font.Normal
                                 horizontalAlignment: Text.AlignHCenter
@@ -158,7 +174,23 @@ Item {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: wallpaperService.selectedIndex = index
+                            onClicked: {
+                                carouselView.currentIndex = index
+                                wallpaperService.selectedIndex = index
+                            }
+                        }
+                    }
+
+                    // Mouse Wheel Support for smooth sliding
+                    MouseArea {
+                        anchors.fill: parent
+                        z: -1
+                        onWheel: function(wheel) {
+                            if (wheel.angleDelta.y < 0 || wheel.angleDelta.x > 0) {
+                                carouselView.incrementCurrentIndex()
+                            } else {
+                                carouselView.decrementCurrentIndex()
+                            }
                         }
                     }
                 }
@@ -201,11 +233,24 @@ Item {
                         clip: true
 
                         Text {
-                            text: " 検索またはコマンドを入力..."
+                            text: " 検索またはコマンドを入力... (Spaceで表示ロック)"
                             color: Qt.rgba(1, 1, 1, 0.3)
                             font.pixelSize: 12
                             visible: !cmdInput.text && !cmdInput.activeFocus
                             anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        onTextChanged: {
+                            var query = cmdInput.text.trimmed().toLowerCase()
+                            if (query.length > 0) {
+                                for (var i = 0; i < wallpaperService.wallpapers.length; i++) {
+                                    var fn = wallpaperService.wallpapers[i].fileName.toLowerCase()
+                                    if (fn.indexOf(query) !== -1) {
+                                        carouselView.currentIndex = i
+                                        break
+                                    }
+                                }
+                            }
                         }
                     }
 

@@ -77,6 +77,20 @@ void ShellController::poll()
     setArmed(isHoldChordDown());
 }
 
+void ShellController::setLocked(bool locked)
+{
+    if (m_locked == locked) {
+        return;
+    }
+    m_locked = locked;
+    emit lockedChanged();
+}
+
+void ShellController::toggleLock()
+{
+    setLocked(!m_locked);
+}
+
 void ShellController::setArmed(bool armed)
 {
     if (m_armed == armed) {
@@ -84,6 +98,9 @@ void ShellController::setArmed(bool armed)
     }
 
     m_armed = armed;
+    if (!m_armed) {
+        setLocked(false);
+    }
     emit armedChanged();
 
     if (!m_window) {

@@ -12,6 +12,7 @@ class ShellController final : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(bool armed READ isArmed NOTIFY armedChanged FINAL)
+    Q_PROPERTY(bool locked READ isLocked WRITE setLocked NOTIFY lockedChanged FINAL)
     Q_PROPERTY(qreal dimOpacity READ dimOpacity CONSTANT FINAL)
     Q_PROPERTY(int hitZoneSize READ hitZoneSize CONSTANT FINAL)
     Q_PROPERTY(QString holdHint READ holdHint CONSTANT FINAL)
@@ -21,6 +22,9 @@ public:
     explicit ShellController(QObject *parent = nullptr);
 
     [[nodiscard]] bool isArmed() const noexcept { return m_armed; }
+    [[nodiscard]] bool isLocked() const noexcept { return m_locked; }
+    void setLocked(bool locked);
+    Q_INVOKABLE void toggleLock();
     [[nodiscard]] qreal dimOpacity() const noexcept { return 0.22; }
     [[nodiscard]] int hitZoneSize() const noexcept { return 16; }
     [[nodiscard]] QString holdHint() const;
@@ -36,6 +40,7 @@ public:
 
 signals:
     void armedChanged();
+    void lockedChanged();
     void statusTextChanged();
 
 private:
@@ -47,6 +52,7 @@ private:
     QQuickWindow *m_window = nullptr;
     QTimer m_pollTimer;
     bool m_armed {false};
+    bool m_locked {false};
     bool m_useWinShift {false};
     QString m_statusText;
 };
