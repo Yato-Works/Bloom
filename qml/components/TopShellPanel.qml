@@ -176,15 +176,15 @@ Item {
                     ColumnLayout {
                         spacing: 2
                         Text {
-                            text: systemInfo.formattedTime
+                            text: systemInfo.formattedTime !== "" ? systemInfo.formattedTime : "17:02"
                             color: "#ffffff"
                             font.pixelSize: 42
                             font.weight: Font.Light
                             font.family: "Segoe UI"
                         }
                         Text {
-                            text: systemInfo.formattedDate + " · Welcome to Caelestia Bloom"
-                            color: Qt.rgba(1, 1, 1, 0.6)
+                            text: (systemInfo.formattedDate !== "" ? systemInfo.formattedDate : "July 31") + " · Welcome to Caelestia Bloom"
+                            color: Qt.rgba(1, 1, 1, 0.65)
                             font.pixelSize: Theme.fontMD
                         }
                     }
@@ -308,7 +308,7 @@ Item {
                         spacing: 12
                         MetricRing {
                             label: "RAM"
-                            value: systemInfo.ramUsage
+                            value: systemInfo.memoryUsage
                             accent: "#cba6f7"
                         }
                     }

@@ -37,11 +37,15 @@ SystemInfoService::SystemInfoService(QObject *parent) : QObject(parent)
     }
 }
 
+#include <QDateTime>
+
 int SystemInfoService::cpuUsage() const noexcept { return m_cpuUsage; }
 int SystemInfoService::memoryUsage() const noexcept { return m_memoryUsage; }
 QString SystemInfoService::memorySummary() const { return m_memorySummary; }
 QString SystemInfoService::uptime() const { return m_uptime; }
 QString SystemInfoService::hostName() const { return QSysInfo::machineHostName(); }
+QString SystemInfoService::formattedTime() const { return QTime::currentTime().toString(QStringLiteral("hh:mm")); }
+QString SystemInfoService::formattedDate() const { return QDate::currentDate().toString(QStringLiteral("MMMM d, ddd")); }
 
 void SystemInfoService::start()
 {
