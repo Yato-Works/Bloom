@@ -96,27 +96,27 @@ public:
     int font2XL() const { return 24; }
     int font3XL() const { return 36; }
 
-    QColor background() const { return QColor("#0B0C0F"); }
-    QColor surface() const { return QColor("#141518"); }
-    QColor surfaceRaised() const { return QColor("#1C1D22"); }
-    QColor surfaceContainer() const { return QColor("#222328"); }
-    QColor surfaceContainerHigh() const { return QColor("#2A2B31"); }
-    QColor border() const { return QColor("#87665a"); }
-    QColor outline() const { return QColor("#3A3B40"); }
-    QColor outlineVariant() const { return QColor("#23242A"); }
-    QColor text() const { return QColor("#f2e1d5"); }
-    QColor textMuted() const { return QColor("#c0aaa0"); }
-    QColor onSurfaceMuted() const { return QColor("#5F616B"); }
-    QColor primary() const { return QColor("#ffad6d"); }
-    QColor primaryContainer() const { return QColor("#FF75B722"); }
-    QColor accent() const { return QColor("#ef8d71"); }
-    QColor secondaryContainer() const { return QColor("#9AA3FF18"); }
-    QColor tertiary() const { return QColor("#FFB280"); }
-    QColor tertiaryContainer() const { return QColor("#FFB28018"); }
-    QColor success() const { return QColor("#c3c66e"); }
-    QColor warning() const { return QColor("#f5bf62"); }
-    QColor error() const { return QColor("#FF9B9B"); }
-    QColor onPrimary() const { return QColor("#0B0C0F"); }
+    QColor background() const { return QColor("#0b0d11"); }
+    QColor surface() const { return QColor("#111318"); }
+    QColor surfaceRaised() const { return QColor("#161923"); }
+    QColor surfaceContainer() const { return QColor("#1e222d"); }
+    QColor surfaceContainerHigh() const { return QColor("#262b38"); }
+    QColor border() const { return QColor(255, 255, 255, 25); }
+    QColor outline() const { return QColor("#313645"); }
+    QColor outlineVariant() const { return QColor("#1c202a"); }
+    QColor text() const { return QColor("#ffffff"); }
+    QColor textMuted() const { return QColor("#89b4fa"); }
+    QColor onSurfaceMuted() const { return QColor("#6c7086"); }
+    QColor primary() const { return QColor("#89b4fa"); }
+    QColor primaryContainer() const { return QColor(137, 180, 250, 45); }
+    QColor accent() const { return QColor("#cba6f7"); }
+    QColor secondaryContainer() const { return QColor(203, 166, 247, 45); }
+    QColor tertiary() const { return QColor("#a6e3a1"); }
+    QColor tertiaryContainer() const { return QColor(166, 227, 161, 45); }
+    QColor success() const { return QColor("#a6e3a1"); }
+    QColor warning() const { return QColor("#f9e2af"); }
+    QColor error() const { return QColor("#f38ba8"); }
+    QColor onPrimary() const { return QColor("#0b0d11"); }
 
     qreal shadowOpacity() const { return 0.35; }
     int shadowRadius() const { return 18; }

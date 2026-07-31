@@ -17,7 +17,6 @@ Item {
 
     property bool audioDevicesExpanded: false
     property bool wifiListExpanded: false
-    property bool bluetoothListExpanded: false
 
     property bool wifiEnabled: true
     property bool bluetoothEnabled: true
@@ -60,9 +59,9 @@ Item {
     GlassPanel {
         anchors.fill: parent
         anchors.rightMargin: 20
-        tint: Qt.rgba(0.08, 0.08, 0.12, 0.92)
+        tint: Qt.rgba(0.07, 0.08, 0.11, 0.94)
         elevated: true
-        radius: 24
+        radius: 28
 
         Flickable {
             anchors.fill: parent
@@ -77,40 +76,69 @@ Item {
                 width: parent.width
                 spacing: 16
 
-                // Header Badge
+                // Caelestia User Profile & Power Header
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 10
+                    spacing: 12
 
                     Rectangle {
-                        implicitWidth: 34
-                        implicitHeight: 34
-                        radius: 17
+                        implicitWidth: 40
+                        implicitHeight: 40
+                        radius: 20
                         color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.2)
-                        border.width: 1
-                        border.color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.4)
+                        border.width: 1.5
+                        border.color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.45)
 
-                        MaterialIcon {
+                        Text {
                             anchors.centerIn: parent
-                            name: "⚙"
-                            iconSize: 18
-                            iconColor: Theme.primary
+                            text: "👤"
+                            font.pixelSize: 18
                         }
                     }
 
-                    Text {
-                        text: "Control Center"
-                        color: "#ffffff"
-                        font.pixelSize: Theme.fontLG
-                        font.weight: Font.Bold
+                    ColumnLayout {
+                        spacing: 1
                         Layout.fillWidth: true
+
+                        Text {
+                            text: "Caelestia User"
+                            color: "#ffffff"
+                            font.pixelSize: 15
+                            font.weight: Font.Bold
+                        }
+
+                        Text {
+                            text: systemInfo.hostName !== "" ? systemInfo.hostName : "Desktop PC"
+                            color: Qt.rgba(1, 1, 1, 0.45)
+                            font.pixelSize: 11
+                        }
                     }
 
-                    Text {
-                        text: "Caelestia"
-                        color: Qt.rgba(1, 1, 1, 0.4)
-                        font.pixelSize: 11
-                        font.weight: Font.DemiBold
+                    // Power / Lock Quick Actions
+                    RowLayout {
+                        spacing: 6
+
+                        Rectangle {
+                            implicitWidth: 32
+                            implicitHeight: 32
+                            radius: 16
+                            color: powerMouse.containsMouse ? Qt.rgba(1, 0.3, 0.3, 0.3) : Qt.rgba(1, 1, 1, 0.06)
+                            border.width: 1
+                            border.color: Qt.rgba(1, 1, 1, 0.1)
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "⏻"
+                                color: powerMouse.containsMouse ? "#ff5555" : Qt.rgba(1, 1, 1, 0.7)
+                                font.pixelSize: 13
+                            }
+
+                            MouseArea {
+                                id: powerMouse
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                            }
+                        }
                     }
                 }
 
@@ -121,18 +149,18 @@ Item {
                 }
 
                 // ============================================================
-                // 1. Pure Volume & Brightness Section (音量と光だけ！本家スタイル)
+                // Pure Volume & Brightness Section (Caelestia Authentic Style)
                 // ============================================================
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 12
 
-                    // Pure Volume Slider Bar
+                    // Pure Volume Slider Bar (🔊 ───────────○── 72%)
                     Rectangle {
                         Layout.fillWidth: true
-                        implicitHeight: 46
-                        radius: 14
-                        color: Qt.rgba(1, 1, 1, 0.05)
+                        implicitHeight: 48
+                        radius: 16
+                        color: Qt.rgba(1, 1, 1, 0.04)
                         border.width: 1
                         border.color: Qt.rgba(1, 1, 1, 0.08)
 
@@ -140,12 +168,12 @@ Item {
                             anchors.fill: parent
                             anchors.leftMargin: 12
                             anchors.rightMargin: 14
-                            spacing: 10
+                            spacing: 12
 
                             Rectangle {
-                                implicitWidth: 28
-                                implicitHeight: 28
-                                radius: 14
+                                implicitWidth: 30
+                                implicitHeight: 30
+                                radius: 15
                                 color: root.isMuted ? Qt.rgba(1, 0.3, 0.3, 0.25) : Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.2)
 
                                 Text {
@@ -178,17 +206,18 @@ Item {
                                 color: Theme.primary
                                 font.pixelSize: Theme.fontSM
                                 font.weight: Font.Bold
-                                Layout.preferredWidth: 32
+                                Layout.preferredWidth: 36
+                                horizontalAlignment: Text.AlignRight
                             }
                         }
                     }
 
-                    // Pure Brightness Slider Bar
+                    // Pure Brightness Slider Bar (☀️ ───────────○── 85%)
                     Rectangle {
                         Layout.fillWidth: true
-                        implicitHeight: 46
-                        radius: 14
-                        color: Qt.rgba(1, 1, 1, 0.05)
+                        implicitHeight: 48
+                        radius: 16
+                        color: Qt.rgba(1, 1, 1, 0.04)
                         border.width: 1
                         border.color: Qt.rgba(1, 1, 1, 0.08)
 
@@ -196,12 +225,12 @@ Item {
                             anchors.fill: parent
                             anchors.leftMargin: 12
                             anchors.rightMargin: 14
-                            spacing: 10
+                            spacing: 12
 
                             Rectangle {
-                                implicitWidth: 28
-                                implicitHeight: 28
-                                radius: 14
+                                implicitWidth: 30
+                                implicitHeight: 30
+                                radius: 15
                                 color: Qt.rgba(1.0, 0.7, 0.3, 0.2)
 
                                 Text {
@@ -225,7 +254,8 @@ Item {
                                 color: "#cba6f7"
                                 font.pixelSize: Theme.fontSM
                                 font.weight: Font.Bold
-                                Layout.preferredWidth: 32
+                                Layout.preferredWidth: 36
+                                horizontalAlignment: Text.AlignRight
                             }
                         }
                     }
@@ -238,17 +268,147 @@ Item {
                 }
 
                 // ============================================================
-                // 2. Separate Quick Toggles & Accordion Dropdowns
+                // Caelestia 2x2 Large Quick Toggles Grid
+                // ============================================================
+                GridLayout {
+                    Layout.fillWidth: true
+                    columns: 2
+                    columnSpacing: 10
+                    rowSpacing: 10
+
+                    // Wi-Fi Quick Tile
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 52
+                        radius: 16
+                        color: root.wifiEnabled ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.2) : Qt.rgba(1, 1, 1, 0.04)
+                        border.width: 1
+                        border.color: root.wifiEnabled ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.4) : Qt.rgba(1, 1, 1, 0.08)
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 14
+                            anchors.rightMargin: 14
+                            spacing: 10
+
+                            Text { text: "📶"; font.pixelSize: 16 }
+                            ColumnLayout {
+                                spacing: 0
+                                Text { text: "Wi-Fi"; color: "#ffffff"; font.pixelSize: 12; font.weight: Font.Bold }
+                                Text { text: root.wifiEnabled ? "Connected" : "Off"; color: Qt.rgba(1, 1, 1, 0.5); font.pixelSize: 10 }
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.wifiEnabled = !root.wifiEnabled
+                        }
+                    }
+
+                    // Bluetooth Quick Tile
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 52
+                        radius: 16
+                        color: root.bluetoothEnabled ? Qt.rgba(0.5, 0.7, 1.0, 0.2) : Qt.rgba(1, 1, 1, 0.04)
+                        border.width: 1
+                        border.color: root.bluetoothEnabled ? Qt.rgba(0.5, 0.7, 1.0, 0.4) : Qt.rgba(1, 1, 1, 0.08)
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 14
+                            anchors.rightMargin: 14
+                            spacing: 10
+
+                            Text { text: "🌐"; font.pixelSize: 16 }
+                            ColumnLayout {
+                                spacing: 0
+                                Text { text: "Bluetooth"; color: "#ffffff"; font.pixelSize: 12; font.weight: Font.Bold }
+                                Text { text: root.bluetoothEnabled ? "On" : "Off"; color: Qt.rgba(1, 1, 1, 0.5); font.pixelSize: 10 }
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.bluetoothEnabled = !root.bluetoothEnabled
+                        }
+                    }
+
+                    // Night Light Tile
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 52
+                        radius: 16
+                        color: root.nightLightEnabled ? Qt.rgba(1.0, 0.7, 0.3, 0.2) : Qt.rgba(1, 1, 1, 0.04)
+                        border.width: 1
+                        border.color: root.nightLightEnabled ? Qt.rgba(1.0, 0.7, 0.3, 0.4) : Qt.rgba(1, 1, 1, 0.08)
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 14
+                            anchors.rightMargin: 14
+                            spacing: 10
+
+                            Text { text: "🌙"; font.pixelSize: 16 }
+                            ColumnLayout {
+                                spacing: 0
+                                Text { text: "Night Light"; color: "#ffffff"; font.pixelSize: 12; font.weight: Font.Bold }
+                                Text { text: root.nightLightEnabled ? "Active" : "Off"; color: Qt.rgba(1, 1, 1, 0.5); font.pixelSize: 10 }
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.nightLightEnabled = !root.nightLightEnabled
+                        }
+                    }
+
+                    // Power Saver Tile
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 52
+                        radius: 16
+                        color: root.powerSaverEnabled ? Qt.rgba(0.4, 0.9, 0.5, 0.2) : Qt.rgba(1, 1, 1, 0.04)
+                        border.width: 1
+                        border.color: root.powerSaverEnabled ? Qt.rgba(0.4, 0.9, 0.5, 0.4) : Qt.rgba(1, 1, 1, 0.08)
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 14
+                            anchors.rightMargin: 14
+                            spacing: 10
+
+                            Text { text: "🔋"; font.pixelSize: 16 }
+                            ColumnLayout {
+                                spacing: 0
+                                Text { text: "Power Saver"; color: "#ffffff"; font.pixelSize: 12; font.weight: Font.Bold }
+                                Text { text: root.powerSaverEnabled ? "Saving" : "Normal"; color: Qt.rgba(1, 1, 1, 0.5); font.pixelSize: 10 }
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.powerSaverEnabled = !root.powerSaverEnabled
+                        }
+                    }
+                }
+
+                // ============================================================
+                // Separate Connections & Audio Devices Dropdown Cards
                 // ============================================================
 
-                // Audio Output Selection Dropdown Card
+                // Audio Output Device Selection Card
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 6
 
                     Rectangle {
                         Layout.fillWidth: true
-                        implicitHeight: 42
+                        implicitHeight: 44
                         radius: 14
                         color: audioBtnMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.04)
                         border.width: 1
@@ -256,8 +416,8 @@ Item {
 
                         RowLayout {
                             anchors.fill: parent
-                            anchors.leftMargin: 12
-                            anchors.rightMargin: 12
+                            anchors.leftMargin: 14
+                            anchors.rightMargin: 14
                             spacing: 10
 
                             Text { text: "🎧"; font.pixelSize: 14 }
@@ -338,14 +498,14 @@ Item {
                     }
                 }
 
-                // Wi-Fi Connection Dropdown Card
+                // Wi-Fi Connections Dropdown Card
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 6
 
                     Rectangle {
                         Layout.fillWidth: true
-                        implicitHeight: 42
+                        implicitHeight: 44
                         radius: 14
                         color: wifiBtnMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.04)
                         border.width: 1
@@ -353,8 +513,8 @@ Item {
 
                         RowLayout {
                             anchors.fill: parent
-                            anchors.leftMargin: 12
-                            anchors.rightMargin: 12
+                            anchors.leftMargin: 14
+                            anchors.rightMargin: 14
                             spacing: 10
 
                             Text { text: "📶"; font.pixelSize: 14 }
@@ -424,74 +584,6 @@ Item {
                                     }
                                 }
                             }
-                        }
-                    }
-                }
-
-                // 2x2 Quick Toggles Grid
-                GridLayout {
-                    Layout.fillWidth: true
-                    columns: 2
-                    columnSpacing: 10
-                    rowSpacing: 10
-
-                    // Night Light
-                    Rectangle {
-                        Layout.fillWidth: true
-                        implicitHeight: 46
-                        radius: 14
-                        color: root.nightLightEnabled ? Qt.rgba(1.0, 0.7, 0.3, 0.2) : Qt.rgba(1, 1, 1, 0.04)
-                        border.width: 1
-                        border.color: root.nightLightEnabled ? Qt.rgba(1.0, 0.7, 0.3, 0.4) : Qt.rgba(1, 1, 1, 0.08)
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 12
-                            anchors.rightMargin: 12
-                            spacing: 8
-
-                            Text { text: "🌙"; font.pixelSize: 14 }
-                            ColumnLayout {
-                                spacing: 0
-                                Text { text: "Night Light"; color: "#ffffff"; font.pixelSize: 11; font.weight: Font.Bold }
-                                Text { text: root.nightLightEnabled ? "Active" : "Off"; color: Qt.rgba(1, 1, 1, 0.5); font.pixelSize: 9 }
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.nightLightEnabled = !root.nightLightEnabled
-                        }
-                    }
-
-                    // Power Saver
-                    Rectangle {
-                        Layout.fillWidth: true
-                        implicitHeight: 46
-                        radius: 14
-                        color: root.powerSaverEnabled ? Qt.rgba(0.4, 0.9, 0.5, 0.2) : Qt.rgba(1, 1, 1, 0.04)
-                        border.width: 1
-                        border.color: root.powerSaverEnabled ? Qt.rgba(0.4, 0.9, 0.5, 0.4) : Qt.rgba(1, 1, 1, 0.08)
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 12
-                            anchors.rightMargin: 12
-                            spacing: 8
-
-                            Text { text: "🔋"; font.pixelSize: 14 }
-                            ColumnLayout {
-                                spacing: 0
-                                Text { text: "Power Saver"; color: "#ffffff"; font.pixelSize: 11; font.weight: Font.Bold }
-                                Text { text: root.powerSaverEnabled ? "Saving" : "Normal"; color: Qt.rgba(1, 1, 1, 0.5); font.pixelSize: 9 }
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.powerSaverEnabled = !root.powerSaverEnabled
                         }
                     }
                 }
