@@ -140,5 +140,17 @@ ApplicationWindow {
             open: shell.rightOpen
             onPanelHoveredChanged: shell.rightPanelHovered = panelHovered
         }
+        SettingsModal {
+            id: settingsModal
+            anchors.fill: parent
+        }
+
+        Connections {
+            target: appLauncherService
+            function onThemeSettingsRequested() { settingsModal.open() }
+            function onSettingsRequested() { settingsModal.open() }
+        }
+
     }
+function openSettings() { settingsModal.open() }
 }

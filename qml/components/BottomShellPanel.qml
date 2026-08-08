@@ -346,7 +346,9 @@ Item {
                                         } else if (cmdName === ">lock") {
                                             shellController.toggleLock()
                                         } else if (cmdName === ">theme") {
-                                            Theme.toggleTheme()
+                                            appLauncherService.requestSettings()
+                                        } else if (cmdName === ">settings") {
+                                            appLauncherService.requestSettings()
                                         } else if (cmdName === ">folder") {
                                             wallpaperService.openFolder()
                                         } else if (cmdName === ">reload") {
@@ -757,8 +759,8 @@ Item {
                             if (t.startsWith(">")) {
                                 if (t.indexOf(">lock") === 0) {
                                     shellController.toggleLock()
-                                } else if (t.indexOf(">theme") === 0) {
-                                    themePopover.open()
+                                } else if (t.indexOf(">theme") === 0 || t.indexOf(">settings") === 0) {
+                                    appLauncherService.requestSettings()
                                 } else if (t.indexOf(">wallpaper") === 0 || t.indexOf(">wall") === 0) {
                                     cmdInput.text = ">wallpaper"
                                 } else if (t.indexOf(">folder") === 0) {
@@ -777,7 +779,8 @@ Item {
                                         var cName = cmds[0].name
                                         if (cName === ">wallpaper") cmdInput.text = ">wallpaper"
                                         else if (cName === ">lock") shellController.toggleLock()
-                                        else if (cName === ">theme") themePopover.open()
+                                        else if (cName === ">theme") appLauncherService.requestSettings()
+                                        else if (cName === ">settings") appLauncherService.requestSettings()
                                         else if (cName === ">folder") wallpaperService.openFolder()
                                         else if (cName === ">reload") wallpaperService.refreshWallpapers()
                                         else if (cName === ">snip") { appLauncherService.launchApp("snippingtool.exe"); shellController.disarm() }

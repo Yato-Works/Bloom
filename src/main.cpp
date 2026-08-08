@@ -110,6 +110,16 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("cavaService"), services.cavaService());
 
     static ThemeBridge themeBridge;
+    ConfigService *config = services.configService();
+    // Restore the last selected profile & color theme from disk.
+    themeBridge.setProfile(config->profile());
+    themeBridge.setThemeByName(config->themeName());
+    QObject::connect(&themeBridge, &ThemeBridge::themeChanged, config, [config, &themeBridge] {
+        config->setThemeName(themeBridge.themeName());
+    });
+    QObject::connect(&themeBridge, &ThemeBridge::profileChanged, config, [config, &themeBridge] {
+        config->setProfile(themeBridge.profile());
+    });
     engine.rootContext()->setContextProperty(QStringLiteral("Theme"), &themeBridge);
 
     engine.loadFromModule("Bloom", "Main");

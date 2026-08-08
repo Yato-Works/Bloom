@@ -23,12 +23,14 @@ public:
     Q_INVOKABLE QVariantList availableCommands() const;
     Q_INVOKABLE QVariantList searchCliCommands(const QString &query);
 
-    // Theme settings signal
+    // UI navigation signals
     Q_INVOKABLE void requestThemeSettings();
+    Q_INVOKABLE void requestSettings();
 
 signals:
     void appsChanged();
     void themeSettingsRequested();
+    void settingsRequested();
 
 private:
     QVariantList m_apps;

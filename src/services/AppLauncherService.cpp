@@ -254,3 +254,8 @@ void AppLauncherService::requestThemeSettings()
 {
     emit themeSettingsRequested();
 }
+
+void AppLauncherService::requestSettings()
+{
+    emit settingsRequested();
+}

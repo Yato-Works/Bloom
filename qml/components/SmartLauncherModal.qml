@@ -88,9 +88,9 @@ Item {
         var c = cmdName.toLowerCase()
         if (c === ">calculator" || c === ">calc" || c === ">c") {
             launcherRoot.openCalculatorRequested()
-        } else if (c === ">theme") {
-            // Open the theme selection popover (wired in Main.qml via themeSettingsRequested)
-            appLauncherService.requestThemeSettings()
+        } else if (c === ">theme" || c === ">settings") {
+            // Open the settings modal (profiles + color themes) via appLauncherService
+            appLauncherService.requestSettings()
         } else if (c === ">lock") {
             shellController.toggleLock()
         } else if (c === ">wallpaper") {

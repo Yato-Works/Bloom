@@ -60,6 +60,7 @@ qt_add_qml_module(Bloom
         qml/components/MediaTab.qml
         qml/components/SystemHealthTab.qml
         qml/components/ThemePopover.qml
+        qml/components/SettingsModal.qml
         qml/components/VerticalSidebar.qml
         qml/components/DashboardCard.qml
         qml/components/ControlStack.qml

@@ -49,6 +49,33 @@ QStringList ThemeBridge::availableThemes() const
     };
 }
 
+QStringList ThemeBridge::availableProfiles() const
+{
+    return { QStringLiteral("AX"), QStringLiteral("Caelestia"), QStringLiteral("Bloom") };
+}
+
+void ThemeBridge::setProfile(const QString &name)
+{
+    const QString p = name.trimmed();
+    const QStringList profiles = availableProfiles();
+    int match = -1;
+    for (int i = 0; i < profiles.size(); ++i) {
+        if (profiles.at(i).compare(p, Qt::CaseInsensitive) == 0) { match = i; break; }
+    }
+    if (match < 0) return;
+    const QString stdName = profiles.at(match);
+    if (m_profile.compare(stdName, Qt::CaseInsensitive) == 0) return;
+    m_profile = stdName;
+
+    // Apply the profile's default palette (reuses the theme-color system).
+    QString def = QStringLiteral("Bloom Dark");
+    if (stdName.compare(QStringLiteral("AX"), Qt::CaseInsensitive) == 0) def = QStringLiteral("Cyberpunk Mint");
+    else if (stdName.compare(QStringLiteral("Caelestia"), Qt::CaseInsensitive) == 0) def = QStringLiteral("Mocha");
+    setThemeByName(def);
+
+    emit profileChanged();
+}
+
 // ===== Color Implementation =====
 
 // Your Arch setup palette:
