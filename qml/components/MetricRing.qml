@@ -9,13 +9,6 @@ Item {
     implicitWidth: 72
     implicitHeight: 82
 
-    onValueChanged: {
-        ringAnim.from = previousValue
-        ringAnim.to = root.value
-        ringAnim.start()
-    }
-    property real previousValue: 0
-
     // Background ring track
     Canvas {
         id: track
@@ -52,13 +45,12 @@ Item {
             ctx.arc(28, 28, 24, startAngle, endAngle)
             ctx.stroke()
         }
+        onProgressChanged: requestPaint()
 
         Behavior on progress {
             NumberAnimation {
-                id: ringAnim
                 duration: Theme.durationDefault
                 easing.type: Easing.OutCubic
-                onStarted: root.previousValue = root.value
             }
         }
 

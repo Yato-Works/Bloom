@@ -103,35 +103,9 @@ void OverlayController::activateAction(const QString &actionId)
 {
     emit actionRequested(actionId);
 
-    // デバッグ用：ファイルログ
-    {
-        QFile f(QStringLiteral("C:\\Users\\smily\\Bloom\\bloom_debug.log"));
-        if (f.open(QIODevice::Append | QIODevice::Text)) {
-            f.write(QStringLiteral("activateAction called: actionId=%1 visible=%2 mode=%3\n")
-                        .arg(actionId)
-                        .arg(m_visible)
-                        .arg(m_mode)
-                        .toUtf8());
-            f.close();
-        }
-    }
-
     if (actionId == QLatin1String("close")) {
         hide();
-    } else if (actionId == QLatin1String("weather")) {
-        showWeather();
-    } else if (actionId == QLatin1String("notion")) {
-        showNotion();
-    } else if (actionId == QLatin1String("system")) {
-        showSystem();
-    } else if (actionId == QLatin1String("music")) {
-        showMusic();
-    } else if (actionId == QLatin1String("settings")) {
-        showSettings();
-    } else if (actionId == QLatin1String("explorer")) {
-        showExplorer();
     } else {
-        // "home", "launcher", or any unknown action → show launcher/home
         showHome();
     }
 }

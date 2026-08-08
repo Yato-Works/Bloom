@@ -13,14 +13,7 @@ and reveals edge hit-zones (no permanent bars).
 | Move cursor to **bottom edge** | Bottom widgets slide in (wallpaper / music / workspace) |
 | Keep cursor on panel | Panel stays open (mode β) |
 | **Release keys** | Everything closes (B1) |
-
-Optional chord: `shellController.setUseWinShift(true)` → hold `Win + Shift`
-instead (more OS conflicts; off by default = A2).
-
-## Legacy single-shot hotkeys
-
-Still registered via `GlobalShortcutService` (`Ctrl+Alt` + letter). The main
-interaction is now the hold shell above.
+| **`Ctrl + Win` + `Space`** | Toggle overlay lock (stays armed without holding) |
 
 ## Included UI foundation
 

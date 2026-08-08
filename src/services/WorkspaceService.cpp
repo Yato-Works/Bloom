@@ -1,7 +1,9 @@
 #include "WorkspaceService.h"
 
+#include <QDebug>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -11,12 +13,21 @@
 #ifdef Q_OS_WIN
 #  include <qt_windows.h>
 #  include <shellapi.h>
+#  ifndef WM_SHELLHOOK
+#    define WM_SHELLHOOK 0x0044
+#  endif
 #endif
 
 WorkspaceService::WorkspaceService(QObject *parent)
     : QObject(parent)
 {
     setStatusText(QStringLiteral("Ready"));
+    loadFromJson();
+}
+
+WorkspaceService::~WorkspaceService()
+{
+    stopTracking();
 }
 
 QString WorkspaceService::storagePath() const
@@ -329,3 +340,246 @@ void WorkspaceService::setStatusText(const QString &text)
     m_statusText = text;
     emit statusTextChanged();
 }
+
+// ===========================================================================
+// P1: virtual-desktop app tracking
+// ===========================================================================
+
+QString WorkspaceService::jsonPath() const
+{
+    const QString dirPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+                            + QStringLiteral("/Bloom");
+    QDir().mkpath(dirPath);
+    return dirPath + QStringLiteral("/workspace_apps.json");
+}
+
+void WorkspaceService::loadFromJson()
+{
+    QFile file(jsonPath());
+    if (!file.exists() || !file.open(QIODevice::ReadOnly)) {
+        return;
+    }
+
+    const QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
+    if (!doc.isObject()) {
+        return;
+    }
+    const QJsonObject root = doc.object();
+
+    m_currentWorkspace = root.value(QStringLiteral("currentWorkspace")).toInt(1);
+    if (m_currentWorkspace < 1) {
+        m_currentWorkspace = 1;
+    }
+
+    m_workspaceApps.clear();
+    const QJsonArray workspaces = root.value(QStringLiteral("workspaces")).toArray();
+    for (int i = 0; i < workspaces.size(); ++i) {
+        const QJsonObject ws = workspaces.at(i).toObject();
+        QStringList apps;
+        const QJsonArray arr = ws.value(QStringLiteral("apps")).toArray();
+        for (const QJsonValue &v : arr) {
+            apps.append(v.toString());
+        }
+        m_workspaceApps.insert(i + 1, apps);   // 1-based index
+    }
+    qDebug() << "WorkspaceService: loaded" << m_workspaceApps.size()
+             << "workspaces, current =" << m_currentWorkspace;
+}
+
+void WorkspaceService::saveToJson() const
+{
+    // Make sure the storage directory exists (it may not on first run).
+    QDir().mkpath(QFileInfo(jsonPath()).absolutePath());
+
+    QJsonArray workspaces;
+    for (auto it = m_workspaceApps.constBegin(); it != m_workspaceApps.constEnd(); ++it) {
+        QJsonObject ws;
+        ws.insert(QStringLiteral("index"), it.key());
+        QJsonArray apps;
+        for (const QString &app : it.value()) {
+            apps.append(app);
+        }
+        ws.insert(QStringLiteral("apps"), apps);
+        workspaces.append(ws);
+    }
+
+    QJsonObject root;
+    root.insert(QStringLiteral("currentWorkspace"), m_currentWorkspace);
+    root.insert(QStringLiteral("workspaces"), workspaces);
+
+    QFile file(jsonPath());
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        qWarning() << "WorkspaceService: cannot write" << jsonPath();
+        return;
+    }
+    file.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
+    file.close();
+}
+
+void WorkspaceService::setCurrentWorkspace(int index)
+{
+    if (index < 1) {
+        index = 1;
+    }
+    if (m_currentWorkspace == index) {
+        return;
+    }
+    m_currentWorkspace = index;
+    emit currentWorkspaceChanged();
+    emit workspaceAppsChanged();
+    saveToJson();
+    qDebug() << "WorkspaceService: current workspace ->" << m_currentWorkspace;
+}
+
+QStringList WorkspaceService::workspaceApps() const
+{
+    return appsOnWorkspace(m_currentWorkspace);
+}
+
+QStringList WorkspaceService::appsOnWorkspace(int index) const
+{
+    return m_workspaceApps.value(index);
+}
+
+void WorkspaceService::switchToNext()
+{
+    setCurrentWorkspace(m_currentWorkspace + 1);
+}
+
+void WorkspaceService::switchToPrevious()
+{
+    setCurrentWorkspace(m_currentWorkspace - 1);
+}
+
+void WorkspaceService::jumpTo(int index)
+{
+    setCurrentWorkspace(index);
+}
+
+void WorkspaceService::addCurrentApp(const QString &exe)
+{
+    if (exe.isEmpty()) {
+        return;
+    }
+    const QString name = QFileInfo(exe).fileName();
+    if (name.isEmpty()) {
+        return;
+    }
+
+    QStringList &list = m_workspaceApps[m_currentWorkspace];
+    if (list.contains(name, Qt::CaseInsensitive)) {
+        return;
+    }
+    list.append(name);
+    emit workspaceAppsChanged();
+    saveToJson();
+    qDebug() << "WorkspaceService: +" << name << "on ws" << m_currentWorkspace;
+}
+
+void WorkspaceService::removeCurrentApp(const QString &exe)
+{
+    const QString name = QFileInfo(exe).fileName();
+    if (name.isEmpty()) {
+        return;
+    }
+    for (auto &list : m_workspaceApps) {
+        list.removeAll(name);
+    }
+    emit workspaceAppsChanged();
+    saveToJson();
+    qDebug() << "WorkspaceService: -" << name;
+}
+
+#ifdef Q_OS_WIN
+
+static LRESULT CALLBACK shellHookProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    if (msg == WM_SHELLHOOK) {
+        auto *self = reinterpret_cast<WorkspaceService *>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
+        if (self) {
+            self->handleShellEvent(static_cast<unsigned int>(wParam), reinterpret_cast<void *>(lParam));
+        }
+        return 0;
+    }
+    return DefWindowProcW(hwnd, msg, wParam, lParam);
+}
+#endif
+
+void *WorkspaceService::createHookWindow()
+{
+#ifdef Q_OS_WIN
+    const HINSTANCE hInst = GetModuleHandleW(nullptr);
+    WNDCLASSEXW wc = {};
+    wc.cbSize = sizeof(WNDCLASSEXW);
+    wc.lpfnWndProc = shellHookProc;
+    wc.hInstance = hInst;
+    wc.lpszClassName = L"BloomShellHookMsgWin";
+    RegisterClassExW(&wc);
+            // A real top-level window that is *visible* (but off-screen and
+    // non-activating) is required: RegisterShellHookWindow will not deliver
+    // WM_SHELLHOOK messages to hidden windows, and Qt reliably pumps messages
+    // for windows Qt did not create as long as they are top-level.
+    HWND hwnd = CreateWindowExW(WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE,
+                                wc.lpszClassName, L"BloomShellHook",
+                                WS_POPUP, -32000, -32000, 1, 1,
+                                nullptr, nullptr, hInst, nullptr);
+    if (!hwnd) {
+        qWarning() << "WorkspaceService: CreateWindowExW(shell hook) failed"
+                   << static_cast<int>(GetLastError());
+        return nullptr;
+    }
+    ShowWindow(hwnd, SW_SHOW);   // makes the window visible -> required for hook delivery
+    SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+    return hwnd;
+#else
+    return nullptr;
+#endif
+}
+
+
+void WorkspaceService::handleShellEvent(unsigned int code, void *hwnd)
+{
+    if (code == HSHELL_WINDOWCREATED) {
+        addCurrentApp(executablePathForWindow(reinterpret_cast<HWND>(hwnd)));
+    } else if (code == HSHELL_WINDOWDESTROYED) {
+        removeCurrentApp(executablePathForWindow(reinterpret_cast<HWND>(hwnd)));
+    }
+}
+
+bool WorkspaceService::startTracking()
+{
+#ifdef Q_OS_WIN
+    m_hookWindow = createHookWindow();
+    if (!m_hookWindow) {
+        return false;
+    }
+
+    HWND hwnd = reinterpret_cast<HWND>(m_hookWindow);
+    if (!RegisterShellHookWindow(hwnd)) {
+        qWarning() << "WorkspaceService: RegisterShellHookWindow failed"
+                   << static_cast<int>(GetLastError());
+        return false;
+    }
+
+    qDebug() << "WorkspaceService: app tracking started";
+    return true;
+#else
+    return false;
+#endif
+}
+
+void WorkspaceService::stopTracking()
+{
+#ifdef Q_OS_WIN
+    if (m_hookWindow) {
+        DeregisterShellHookWindow(reinterpret_cast<HWND>(m_hookWindow));
+        DestroyWindow(reinterpret_cast<HWND>(m_hookWindow));
+        m_hookWindow = nullptr;
+        }
+#else
+    Q_UNUSED(m_hookWindow)
+#endif
+}
+
+
+

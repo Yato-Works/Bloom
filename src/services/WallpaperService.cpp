@@ -6,6 +6,8 @@
 #include <QGuiApplication>
 #include <QSettings>
 #include <QStandardPaths>
+#include <QDesktopServices>
+#include <QUrl>
 
 #ifdef Q_OS_WIN
 #  include <qt_windows.h>
@@ -24,7 +26,9 @@ QStringList defaultGalleryPaths()
 
     WCHAR documents[MAX_PATH] = {0};
     if (SHGetFolderPathW(nullptr, CSIDL_MYDOCUMENTS, nullptr, SHGFP_TYPE_CURRENT, documents) == S_OK) {
-        paths << QString::fromWCharArray(documents) + QStringLiteral("\\Bloom Wallpapers");
+        const QString docsPath = QString::fromWCharArray(documents) + QStringLiteral("\\Bloom Wallpapers");
+        QDir().mkpath(docsPath);
+        paths << docsPath;
     }
 #endif
 
@@ -40,22 +44,58 @@ QStringList imageFilters()
 WallpaperService::WallpaperService(QObject *parent)
     : QObject(parent)
 {
+    refreshWallpapers();
+}
+
+void WallpaperService::refreshWallpapers()
+{
+    m_names.clear();
+    m_paths.clear();
+
     loadDefaultWallpapers();
 
     const QStringList roots = defaultGalleryPaths();
     for (const QString &root : roots) {
         QDir dir(root);
         if (!dir.exists()) {
-            continue;
+            dir.mkpath(QStringLiteral("."));
         }
         const QStringList files = dir.entryList(imageFilters(), QDir::Files, QDir::Name);
         for (const QString &file : files) {
-            m_names << QFileInfo(file).completeBaseName();
-            m_paths << dir.filePath(file);
+            const QString fullPath = dir.filePath(file);
+            const QString name = QFileInfo(file).completeBaseName();
+
+            m_names << name;
+            m_paths << fullPath;
+
+            QVariantMap w;
+            w["name"] = name;
+            w["fileName"] = file;
+            w["colorStart"] = QStringLiteral("#1e2233");
+            w["colorEnd"] = QStringLiteral("#0b0d14");
+            w["path"] = QUrl::fromLocalFile(fullPath).toString();
+            m_wallpapers.append(w);
         }
     }
 
+    emit wallpapersChanged();
     refreshCurrent();
+}
+
+void WallpaperService::openFolder()
+{
+    const QStringList roots = defaultGalleryPaths();
+    if (!roots.isEmpty()) {
+        const QString path = roots.first();
+        QDir().mkpath(path);
+        QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+    }
+}
+
+QString WallpaperService::galleryFolderPath() const
+{
+    const QStringList roots = defaultGalleryPaths();
+    return roots.isEmpty() ? QString() : roots.first();
 }
 
 void WallpaperService::loadDefaultWallpapers()
@@ -93,6 +133,12 @@ void WallpaperService::setSelectedIndex(int index)
     if (index >= 0 && index < m_wallpapers.size() && m_selectedIndex != index) {
         m_selectedIndex = index;
         emit selectedIndexChanged();
+
+        const QVariantMap item = m_wallpapers.at(index).toMap();
+        const QString path = item.value(QStringLiteral("path")).toString();
+        if (!path.isEmpty()) {
+            setWallpaper(path);
+        }
     }
 }
 

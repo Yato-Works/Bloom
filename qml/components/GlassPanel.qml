@@ -3,16 +3,17 @@ import Bloom
 
 Rectangle {
     id: panel
-    property color tint: Qt.rgba(0.06, 0.07, 0.10, 0.88)
+    property color tint: Qt.rgba(0.07, 0.08, 0.12, 0.90)
     property bool showShadow: true
     property bool showHighlight: true
     property bool elevated: false
+    property color accentBorder: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, elevated ? 0.28 : 0.14)
     default property alias content: content.data
 
     radius: Theme.radiusLG
-    color: Qt.rgba(tint.r, tint.g, tint.b, elevated ? 0.92 : 0.86)
+    color: Qt.rgba(tint.r, tint.g, tint.b, elevated ? 0.94 : 0.88)
     border.width: 1
-    border.color: Qt.rgba(1, 1, 1, elevated ? 0.12 : 0.08)
+    border.color: accentBorder
 
     // Secondary inner highlight border for premium glass feel
     Rectangle {

@@ -6,7 +6,7 @@ NotionService::NotionService(QObject *parent)
 {
     // 初期サンプルの Notion タスク
     QVariantMap task1;
-    task1["title"] = "Caelestia-shell UIの調整";
+    task1["title"] = "Bloom-shell UIの調整";
     task1["category"] = "Design";
     task1["completed"] = true;
     task1["date"] = QDateTime::currentDateTime().toString("MM/dd");

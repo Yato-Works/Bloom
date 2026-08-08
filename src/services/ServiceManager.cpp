@@ -9,11 +9,15 @@ ServiceManager::ServiceManager(QObject *parent)
     , m_weatherService(this)
     , m_overlayController(this)
     , m_shellController(this)
-    , m_globalShortcuts(&m_overlayController, this)
     , m_systemInfoService(this)
     , m_configService(this)
     , m_wallpaperService(this)
     , m_workspaceService(this)
+    , m_cavaService(this)
+    , m_hotkeyService(this)
+    , m_workspaceController(this)
+    , m_shortcutSwitcher(this)
+    , m_experimentalSwitcher(this)
 {
 }
 
@@ -28,13 +32,22 @@ void ServiceManager::initialize()
     m_weatherService.initialize();
     m_systemInfoService.start();
     m_shellController.start();
+    m_musicControlService.start();
+    m_cavaService.start();
 
-#ifdef Q_OS_WIN
-    m_globalShortcuts.setProfile(m_configService.shortcutProfile());
-    connect(&m_configService, &ConfigService::shortcutProfileChanged, this, [this](const QString &profile) {
-        m_globalShortcuts.setProfile(profile);
-    });
-#endif
+    m_hotkeyService.start();
+    m_shortcutSwitcher.setHotkeyService(&m_hotkeyService);
+    m_shortcutSwitcher.initialize();
+    m_experimentalSwitcher.initialize();
+    m_workspaceController.setHotkeyService(&m_hotkeyService);
+    m_workspaceController.setWorkspaceService(&m_workspaceService);
+    m_workspaceController.setShortcutSwitcher(&m_shortcutSwitcher);
+    m_workspaceController.setExperimentalSwitcher(&m_experimentalSwitcher);
+    m_workspaceController.setSwitchingMode(QStringLiteral("standard"));
+    QObject::connect(&m_hotkeyService, &GlobalHotkeyService::switchPrevRequested, &m_workspaceController, &WorkspaceController::switchPrevious);
+    QObject::connect(&m_hotkeyService, &GlobalHotkeyService::switchNextRequested, &m_workspaceController, &WorkspaceController::switchNext);
+    QObject::connect(&m_hotkeyService, &GlobalHotkeyService::jumpRequested, &m_workspaceController, [this](int idx){ if (idx >= 1 && idx <= 9) m_workspaceController.switchTo(idx); });
+    m_workspaceService.startTracking();
 }
 
 WeatherService *ServiceManager::weatherService() noexcept { return &m_weatherService; }
@@ -45,8 +58,12 @@ WallpaperService *ServiceManager::wallpaperService() noexcept { return &m_wallpa
 
 MusicControlService *ServiceManager::musicControlService() noexcept { return &m_musicControlService; }
 ConfigService *ServiceManager::configService() noexcept { return &m_configService; }
-GlobalShortcutService *ServiceManager::globalShortcutService() noexcept { return &m_globalShortcuts; }
 WorkspaceService *ServiceManager::workspaceService() noexcept { return &m_workspaceService; }
+WorkspaceController *ServiceManager::workspaceController() noexcept { return &m_workspaceController; }
 AIService *ServiceManager::aiService() noexcept { return &m_aiService; }
 NotionService *ServiceManager::notionService() noexcept { return &m_notionService; }
+AppLauncherService *ServiceManager::appLauncherService() noexcept { return &m_appLauncherService; }
+CavaService *ServiceManager::cavaService() noexcept { return &m_cavaService; }
+GlobalHotkeyService *ServiceManager::hotkeyService() noexcept { return &m_hotkeyService; }
+ExperimentalWorkspaceSwitcher *ServiceManager::experimentalSwitcher() noexcept { return &m_experimentalSwitcher; }
 

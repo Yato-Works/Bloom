@@ -1,4 +1,4 @@
-import QtQuick
+﻿import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Bloom
@@ -15,23 +15,14 @@ ApplicationWindow {
     property bool leftPanelHovered: false
     property bool rightPanelHovered: false
 
-    readonly property bool isLocked: shellController.locked
-
     readonly property bool topOpen: shellController.armed
-                                    && (topHit.containsMouse || topPanelHovered || isLocked)
+                                    && (topHit.containsMouse || topPanelHovered)
     readonly property bool bottomOpen: shellController.armed
-                                       && (bottomHit.containsMouse || bottomPanelHovered || isLocked)
+                                       && (bottomHit.containsMouse || bottomPanelHovered)
     readonly property bool leftOpen: shellController.armed
-                                     && (leftHit.containsMouse || leftPanelHovered || isLocked)
+                                     && (leftHit.containsMouse || leftPanelHovered)
     readonly property bool rightOpen: shellController.armed
-                                      && (rightHit.containsMouse || rightPanelHovered || isLocked)
-
-    // Space Key Shortcut for Locking / Unlocking
-    Shortcut {
-        sequence: "Space"
-        enabled: shellController.armed
-        onActivated: shellController.toggleLock()
-    }
+                                      && (rightHit.containsMouse || rightPanelHovered)
 
     Connections {
         target: shellController
@@ -61,42 +52,6 @@ ApplicationWindow {
                 onPressed: function(mouse) { mouse.accepted = true }
                 onClicked: function(mouse) { mouse.accepted = true }
                 onWheel: function(wheel) { wheel.accepted = true }
-            }
-        }
-
-        // Lock Status Badge Indicator
-        Rectangle {
-            id: lockBadge
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
-            anchors.topMargin: 8
-            z: 100
-            implicitWidth: lockRow.implicitWidth + 20
-            implicitHeight: 26
-            radius: 13
-            color: shell.isLocked ? Qt.rgba(0.9, 0.3, 0.3, 0.85) : Qt.rgba(0, 0, 0, 0.4)
-            border.width: 1
-            border.color: shell.isLocked ? Qt.rgba(1, 0.5, 0.5, 0.6) : Qt.rgba(1, 1, 1, 0.1)
-            opacity: shellController.armed ? 0.9 : 0
-
-            Behavior on opacity { NumberAnimation { duration: 150 } }
-            Behavior on color { ColorAnimation { duration: 150 } }
-
-            RowLayout {
-                id: lockRow
-                anchors.centerIn: parent
-                spacing: 6
-
-                Text {
-                    text: shell.isLocked ? "🔒" : "🔓"
-                    font.pixelSize: 11
-                }
-                Text {
-                    text: shell.isLocked ? "LOCKED (Space to unlock)" : "Space to lock"
-                    color: "#ffffff"
-                    font.pixelSize: 10
-                    font.weight: Font.DemiBold
-                }
             }
         }
 

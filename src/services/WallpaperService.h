@@ -20,6 +20,10 @@ public:
     Q_INVOKABLE bool setWallpaper(const QString &filePath);
     Q_INVOKABLE bool setWallpaperByIndex(int index);
 
+    Q_INVOKABLE void openFolder();
+    Q_INVOKABLE void refreshWallpapers();
+    Q_INVOKABLE QString galleryFolderPath() const;
+
     Q_INVOKABLE QStringList wallpaperNames() const;
     Q_INVOKABLE QStringList wallpaperPaths() const;
     Q_INVOKABLE int currentIndex() const;

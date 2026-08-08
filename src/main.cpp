@@ -6,51 +6,91 @@
 #include <QDebug>
 #include <QFileInfo>
 #include <QStandardPaths>
+#include <QDir>
 #include <QLockFile>
+#include <QLocalServer>
+#include <QLocalSocket>
 #include <fstream>
 
 #include "services/ServiceManager.h"
 #include "services/ThemeBridge.h"
 
+static QString g_logPath;
+
+void setupLogging() {
+    const QString logDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+    QDir().mkpath(logDir);
+    g_logPath = logDir + "/bloom.log";
+
+    QFile f(g_logPath);
+    if (f.open(QIODevice::WriteOnly | QIODevice::Append)) {
+        f.close();
+    }
+
+    qInstallMessageHandler([](QtMsgType type, const QMessageLogContext &context, const QString &msg) {
+        QByteArray logMsg = QString("[%1] %2 (%3:%4)\n").arg(
+            type == QtDebugMsg ? "DEBUG" : type == QtWarningMsg ? "WARN" : "CRIT",
+            msg, QString::number(context.line), QString::number(context.version)
+        ).toUtf8();
+
+        QFile logFile(g_logPath);
+        if (logFile.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
+            logFile.write(logMsg);
+            logFile.close();
+        }
+    });
+}
+
 int main(int argc, char *argv[])
 {
     qDebug() << "BOOT: main start";
-    // デバッグ出力をファイルにリダイレクト
-    std::ofstream log("C:\\Users\\smily\\Bloom\\bloom_qml_errors.log");
-    if (log.is_open()) {
-        qInstallMessageHandler([](QtMsgType type, const QMessageLogContext &context, const QString &msg) {
-            QByteArray logMsg = QString("[%1] %2 (%3:%4)\n").arg(
-                type == QtDebugMsg ? "DEBUG" : type == QtWarningMsg ? "WARN" : "CRIT",
-                msg, QString::number(context.line), QString::number(context.version)
-            ).toUtf8();
-            std::ofstream log("C:\\Users\\smily\\Bloom\\bloom_qml_errors.log", std::ios::app);
-            if (log.is_open()) log << logMsg.constData();
-        });
-    }
-    // ---- シングルインスタンス制御 ----
-    const QString lockPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation)
-                             + QStringLiteral("/Bloom.lock");
-    QLockFile lockFile(lockPath);
-    lockFile.setStaleLockTime(0); // クラッシュ後も自動復旧
-
-    if (!lockFile.tryLock()) {
-        qDebug() << "BOOT: lock failed, another instance running";
-        qDebug() << "Bloom: another instance is already running. Exiting.";
-        return 0; // 既に起動中なら何もせず終了
-    }
-    qDebug() << "BOOT: lock acquired";
+    setupLogging();
 
     QGuiApplication app(argc, argv);
     QQuickStyle::setStyle(QStringLiteral("Basic"));
     qDebug() << "BOOT: QGuiApplication created";
-    // Prevent the application from exiting when the overlay window is hidden.
     app.setQuitOnLastWindowClosed(false);
-
     app.setOrganizationName(QStringLiteral("Bloom"));
+
+    const QString serverName = QStringLiteral("Bloom_SingleInstance_Server");
+
+    QLocalSocket socket;
+    socket.connectToServer(serverName);
+    if (socket.waitForConnected(500)) {
+        qDebug() << "BOOT: another instance running, sending SHOW request and exiting";
+        socket.write("SHOW\n");
+        socket.waitForBytesWritten(500);
+        socket.disconnectFromServer();
+        return 0;
+    }
+
+    QLocalServer::removeServer(serverName);
 
     ServiceManager services;
     services.initialize();
     qDebug() << "BOOT: services initialized";
+
+    QLocalServer localServer;
+    if (localServer.listen(serverName)) {
+        qDebug() << "BOOT: single instance server listening on" << serverName;
+        QObject::connect(&localServer, &QLocalServer::newConnection, [&localServer, &services]() {
+            QLocalSocket *client = localServer.nextPendingConnection();
+            if (client) {
+                QObject::connect(client, &QLocalSocket::readyRead, [client, &services]() {
+                    QByteArray data = client->readAll();
+                    if (data.contains("SHOW")) {
+                        qDebug() << "BOOT: Received SHOW request from secondary instance";
+                        if (services.overlayController()) {
+                            services.overlayController()->showLauncher();
+                        }
+                        if (services.shellController()) {
+                            services.shellController()->armPermanent(true);
+                        }
+                    }
+                });
+            }
+        });
+    }
 
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty(QStringLiteral("weatherService"), services.weatherService());
@@ -60,10 +100,14 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("musicControl"), services.musicControlService());
     engine.rootContext()->setContextProperty(QStringLiteral("config"), services.configService());
     engine.rootContext()->setContextProperty(QStringLiteral("wallpaperService"), services.wallpaperService());
-    engine.rootContext()->setContextProperty(QStringLiteral("globalShortcuts"), services.globalShortcutService());
     engine.rootContext()->setContextProperty(QStringLiteral("workspaceService"), services.workspaceService());
+    engine.rootContext()->setContextProperty(QStringLiteral("workspaceController"), services.workspaceController());
+    engine.rootContext()->setContextProperty(QStringLiteral("hotkeyService"), services.hotkeyService());
+    engine.rootContext()->setContextProperty(QStringLiteral("experimentalSwitcher"), services.experimentalSwitcher());
     engine.rootContext()->setContextProperty(QStringLiteral("aiService"), services.aiService());
     engine.rootContext()->setContextProperty(QStringLiteral("notionService"), services.notionService());
+    engine.rootContext()->setContextProperty(QStringLiteral("appLauncherService"), services.appLauncherService());
+    engine.rootContext()->setContextProperty(QStringLiteral("cavaService"), services.cavaService());
 
     static ThemeBridge themeBridge;
     engine.rootContext()->setContextProperty(QStringLiteral("Theme"), &themeBridge);
@@ -78,10 +122,10 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // Shell host window — hold chord arms it; release hides (B1).
     if (auto *window = qobject_cast<QQuickWindow*>(roots.first())) {
         services.shellController()->setWindow(window);
         services.overlayController()->setWindow(window);
+        services.shellController()->setLocked(false);
     }
     qDebug() << "BOOT: entering event loop";
 

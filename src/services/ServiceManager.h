@@ -9,11 +9,15 @@
 #include "ShellController.h"
 #include "SystemInfoService.h"
 #include "WallpaperService.h"
-#include "GlobalShortcutService.h"
 #include "WorkspaceService.h"
 #include "AIService.h"
 #include "NotionService.h"
-
+#include "AppLauncherService.h"
+#include "CavaService.h"
+#include "GlobalHotkeyService.h"
+#include "WorkspaceController.h"
+#include "ShortcutWorkspaceSwitcher.h"
+#include "ExperimentalWorkspaceSwitcher.h"
 
 class ServiceManager final : public QObject
 {
@@ -34,11 +38,14 @@ public:
     [[nodiscard]] SystemInfoService *systemInfoService() noexcept;
     [[nodiscard]] MusicControlService *musicControlService() noexcept;
     [[nodiscard]] ConfigService *configService() noexcept;
-    [[nodiscard]] GlobalShortcutService *globalShortcutService() noexcept;
     [[nodiscard]] WorkspaceService *workspaceService() noexcept;
+    [[nodiscard]] WorkspaceController *workspaceController() noexcept;
     [[nodiscard]] AIService *aiService() noexcept;
     [[nodiscard]] NotionService *notionService() noexcept;
-
+    [[nodiscard]] AppLauncherService *appLauncherService() noexcept;
+    [[nodiscard]] CavaService *cavaService() noexcept;
+    [[nodiscard]] GlobalHotkeyService *hotkeyService() noexcept;
+    [[nodiscard]] ExperimentalWorkspaceSwitcher *experimentalSwitcher() noexcept;
 
 private:
     WeatherService m_weatherService;
@@ -46,11 +53,16 @@ private:
 
     OverlayController m_overlayController;
     ShellController m_shellController;
-    GlobalShortcutService m_globalShortcuts;
     SystemInfoService m_systemInfoService;
     MusicControlService m_musicControlService;
     ConfigService m_configService;
     WorkspaceService m_workspaceService;
     AIService m_aiService;
     NotionService m_notionService;
+    AppLauncherService m_appLauncherService;
+    CavaService m_cavaService;
+    GlobalHotkeyService m_hotkeyService;
+    WorkspaceController m_workspaceController;
+    ShortcutWorkspaceSwitcher m_shortcutSwitcher;
+    ExperimentalWorkspaceSwitcher m_experimentalSwitcher;
 };

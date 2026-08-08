@@ -39,7 +39,11 @@ Item {
         z: 999
         hoverEnabled: true
         acceptedButtons: Qt.NoButton
-        onContainsMouseChanged: root.panelHovered = containsMouse
+        onContainsMouseChanged: {
+            root.panelHovered = containsMouse
+            if (containsMouse) shellController.notifyCursorEnter(ShellController.Left)
+            else shellController.notifyCursorLeave(ShellController.Left)
+        }
     }
 
     GlassPanel {

@@ -51,7 +51,7 @@ void AIService::simulateAIResponse(const QString &userPrompt)
         } else if (userPrompt.contains("タスク", Qt::CaseInsensitive) || userPrompt.contains("todo", Qt::CaseInsensitive)) {
             reply = "右側のドロワーで Notion タスクを確認・追加できます！";
         } else if (userPrompt.contains("bloom", Qt::CaseInsensitive) || userPrompt.contains("機能", Qt::CaseInsensitive)) {
-            reply = "Bloom は Caelestia-shell スタイルのデスクトップオーバーレイです。Ctrl+Win でアクセスできます！";
+            reply = "Bloom は次世代のデスクトップオーバーレイです。Ctrl+Win でアクセスできます！";
         } else {
             reply = QString("「%1」について承知いたしました。お手伝いできることがあればいつでもお知らせください！").arg(userPrompt);
         }

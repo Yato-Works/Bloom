@@ -27,3 +27,9 @@ nul
 Thumbs.db
 .DS_Store
 
+# Junk / stray files (kept on disk, excluded from git)
+{},-,- 
+.tmp.driveupload/
+Bloom_Enhanced_Package*.zip
+qml/com
+

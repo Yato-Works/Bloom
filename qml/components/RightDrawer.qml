@@ -53,7 +53,11 @@ Item {
         z: 999
         hoverEnabled: true
         acceptedButtons: Qt.NoButton
-        onContainsMouseChanged: root.panelHovered = containsMouse
+        onContainsMouseChanged: {
+            root.panelHovered = containsMouse
+            if (containsMouse) shellController.notifyCursorEnter(ShellController.Right)
+            else shellController.notifyCursorLeave(ShellController.Right)
+        }
     }
 
     GlassPanel {
@@ -76,7 +80,7 @@ Item {
                 width: parent.width
                 spacing: 16
 
-                // Caelestia User Profile & Power Header
+                // Bloom User Profile & Power Header
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 12
@@ -101,7 +105,7 @@ Item {
                         Layout.fillWidth: true
 
                         Text {
-                            text: "Caelestia User"
+                            text: "Bloom User"
                             color: "#ffffff"
                             font.pixelSize: 15
                             font.weight: Font.Bold
@@ -149,7 +153,80 @@ Item {
                 }
 
                 // ============================================================
-                // Pure Volume & Brightness Section (Caelestia Authentic Style)
+                // 🎨 Bloom 7-Theme Switcher Section
+                // ============================================================
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Text {
+                            text: "🎨 Color Palette Theme"
+                            color: Theme.primary
+                            font.pixelSize: 12
+                            font.weight: Font.Bold
+                        }
+                        Item { Layout.fillWidth: true }
+                        Text {
+                            text: Theme.themeName
+                            color: Theme.accent
+                            font.pixelSize: 11
+                            font.weight: Font.DemiBold
+                        }
+                    }
+
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        Repeater {
+                            model: Theme.availableThemes()
+
+                            Rectangle {
+                                implicitWidth: themeBtnRow.implicitWidth + 16
+                                implicitHeight: 28
+                                radius: 14
+                                color: Theme.themeName === modelData ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.28) : Qt.rgba(1, 1, 1, 0.06)
+                                border.width: 1
+                                border.color: Theme.themeName === modelData ? Theme.primary : Qt.rgba(1, 1, 1, 0.12)
+
+                                RowLayout {
+                                    id: themeBtnRow
+                                    anchors.centerIn: parent
+                                    spacing: 4
+
+                                    Text {
+                                        text: modelData === "Latte" ? "☀️" :
+                                              modelData === "Cyberpunk Neon" ? "⚡" :
+                                              modelData === "Tokyo Night" ? "🌌" :
+                                              modelData === "Rose Pine" ? "🌹" :
+                                              modelData === "Nord Frost" ? "❄️" :
+                                              modelData === "Emerald Aurora" ? "❇️" :
+                                              modelData === "Frappé" ? "🧋" : "☕"
+                                        font.pixelSize: 10
+                                    }
+
+                                    Text {
+                                        text: modelData
+                                        color: Theme.themeName === modelData ? "#ffffff" : Qt.rgba(1, 1, 1, 0.7)
+                                        font.pixelSize: 11
+                                        font.weight: Theme.themeName === modelData ? Font.Bold : Font.Normal
+                                    }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: Theme.setThemeByName(modelData)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ============================================================
+                // Pure Volume & Brightness Section (Bloom Authentic Style)
                 // ============================================================
                 ColumnLayout {
                     Layout.fillWidth: true
@@ -199,6 +276,34 @@ Item {
                                     root.volumeLevel = Math.round(value)
                                     if (root.volumeLevel > 0) root.isMuted = false
                                 }
+
+                                background: Rectangle {
+                                    x: volumeSlider.leftPadding
+                                    y: volumeSlider.topPadding + volumeSlider.availableHeight / 2 - height / 2
+                                    implicitWidth: 180
+                                    implicitHeight: 8
+                                    width: volumeSlider.availableWidth
+                                    height: implicitHeight
+                                    radius: 4
+                                    color: Qt.rgba(1, 1, 1, 0.1)
+
+                                    Rectangle {
+                                        width: volumeSlider.visualPosition * parent.width
+                                        height: parent.height
+                                        color: Theme.primary
+                                        radius: 4
+                                    }
+                                }
+                                handle: Rectangle {
+                                    x: volumeSlider.leftPadding + volumeSlider.visualPosition * (volumeSlider.availableWidth - width)
+                                    y: volumeSlider.topPadding + volumeSlider.availableHeight / 2 - height / 2
+                                    implicitWidth: 16
+                                    implicitHeight: 16
+                                    radius: 8
+                                    color: "#ffffff"
+                                    border.width: 2
+                                    border.color: Theme.primary
+                                }
                             }
 
                             Text {
@@ -247,6 +352,34 @@ Item {
                                 to: 100
                                 value: root.brightnessLevel
                                 onValueChanged: root.brightnessLevel = Math.round(value)
+
+                                background: Rectangle {
+                                    x: brightnessSlider.leftPadding
+                                    y: brightnessSlider.topPadding + brightnessSlider.availableHeight / 2 - height / 2
+                                    implicitWidth: 180
+                                    implicitHeight: 8
+                                    width: brightnessSlider.availableWidth
+                                    height: implicitHeight
+                                    radius: 4
+                                    color: Qt.rgba(1, 1, 1, 0.1)
+
+                                    Rectangle {
+                                        width: brightnessSlider.visualPosition * parent.width
+                                        height: parent.height
+                                        color: "#cba6f7"
+                                        radius: 4
+                                    }
+                                }
+                                handle: Rectangle {
+                                    x: brightnessSlider.leftPadding + brightnessSlider.visualPosition * (brightnessSlider.availableWidth - width)
+                                    y: brightnessSlider.topPadding + brightnessSlider.availableHeight / 2 - height / 2
+                                    implicitWidth: 16
+                                    implicitHeight: 16
+                                    radius: 8
+                                    color: "#ffffff"
+                                    border.width: 2
+                                    border.color: "#cba6f7"
+                                }
                             }
 
                             Text {
@@ -268,7 +401,7 @@ Item {
                 }
 
                 // ============================================================
-                // Caelestia 2x2 Large Quick Toggles Grid
+                // Bloom 2x2 Large Quick Toggles Grid
                 // ============================================================
                 GridLayout {
                     Layout.fillWidth: true
@@ -393,6 +526,85 @@ Item {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
                             onClicked: root.powerSaverEnabled = !root.powerSaverEnabled
+                        }
+                    }
+                }
+
+                // Media Control Card
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 76
+                    radius: 16
+                    color: Qt.rgba(1, 1, 1, 0.04)
+                    border.width: 1
+                    border.color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.25)
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: 12
+                        spacing: 12
+
+                        Rectangle {
+                            implicitWidth: 46
+                            implicitHeight: 46
+                            radius: 10
+                            color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.2)
+                            border.width: 1
+                            border.color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.4)
+
+                            Text { anchors.centerIn: parent; text: "🎵"; font.pixelSize: 22 }
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 2
+
+                            Text {
+                                text: (musicControl && musicControl.trackTitle) ? musicControl.trackTitle : "Bloom Audio Player"
+                                color: "#ffffff"
+                                font.pixelSize: 12
+                                font.weight: Font.Bold
+                                elide: Text.ElideRight
+                            }
+                            Text {
+                                text: (musicControl && musicControl.artistName) ? musicControl.artistName : "Now Playing"
+                                color: Qt.rgba(1, 1, 1, 0.5)
+                                font.pixelSize: 10
+                            }
+
+                            ProgressBar {
+                                Layout.fillWidth: true
+                                implicitHeight: 3
+                                value: 0.45
+                            }
+                        }
+
+                        RowLayout {
+                            spacing: 6
+                            Rectangle {
+                                implicitWidth: 28
+                                implicitHeight: 28
+                                radius: 14
+                                color: Qt.rgba(1, 1, 1, 0.08)
+                                Text { anchors.centerIn: parent; text: "⏮"; color: "#fff"; font.pixelSize: 10 }
+                                MouseArea { anchors.fill: parent; onClicked: musicControl.previous() }
+                            }
+                            Rectangle {
+                                implicitWidth: 34
+                                implicitHeight: 34
+                                radius: 17
+                                color: Theme.primary
+                                Text { anchors.centerIn: parent; text: musicControl.isPlaying ? "⏸" : "▶"; color: "#fff"; font.pixelSize: 11 }
+                                MouseArea { anchors.fill: parent; onClicked: musicControl.playPause() }
+                            }
+                            Rectangle {
+                                implicitWidth: 28
+                                implicitHeight: 28
+                                radius: 14
+                                color: Qt.rgba(1, 1, 1, 0.08)
+                                Text { anchors.centerIn: parent; text: "⏭"; color: "#fff"; font.pixelSize: 10 }
+                                MouseArea { anchors.fill: parent; onClicked: musicControl.next() }
+                            }
                         }
                     }
                 }
@@ -563,7 +775,7 @@ Item {
                                 Repeater {
                                     model: [
                                         { ssid: "Home_5G_Network", signal: "100%" },
-                                        { ssid: "Caelestia_Guest", signal: "80%" },
+                                        { ssid: "Bloom_Guest", signal: "80%" },
                                         { ssid: "Bloom_Studio_WiFi", signal: "65%" }
                                     ]
 
