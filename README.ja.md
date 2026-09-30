@@ -85,7 +85,7 @@ Bloom、そしてその基盤である **Bloom_Core** は、その閉塞感を�
 
 - **スクワークル型のアプリアイコン**: 常用アプリケーション（Chrome, VS Code, Spotify, Terminal, 設定 など）を美しく整列。
 - **インライン・コマンドパレット (`>`)**:
-  - `>wallpaper`: 横スクロールのカルーセルから壁紙を選択。即座に Windows 壁紙と UI テーマ色が連動変更。
+  - `>wallpaper`: 横スクロールのカルーセルから壁紙を選択。即座に Windows 壁紙と UI テーマ色が連動変更。`%USERPROFILE%\Pictures\Bloom-Wallpapers` や `%USERPROFILE%\Documents\Bloom-Wallpapers` 内の画像を自動検出。 *(🎨 おすすめ壁紙をお探しの方へ: 公式壁紙パック [**Bloom_Wallpapers**](https://github.com/Yato-Works/Bloom_Wallpapers) を公開中！)*
   - `>scheme`: Catppuccin, Tokyo Night, Dracula, Nord など多彩なカラースキームへ瞬時に切り替え。
   - `>calc`: 内蔵の高速数式評価エンジン（Qalc 風）によるリアルタイム計算。
   - `>lock`, `>light`, `>dark`, `>snip`, `>folder` 等の便利コマンドに対応。

@@ -84,7 +84,7 @@ Moves into view with responsive fluid physics when moving the cursor to the bott
 
 - **Quick-Launch Squircle Grid**: Fast, high-DPI access to frequent applications (Chrome, VS Code, Spotify, Terminal, Settings).
 - **Inline Command Palette (`>`)**:
-  - `>wallpaper`: Horizontal carousel preview to switch Windows wallpapers and dynamically regenerate Material You theme colors on the fly.
+  - `>wallpaper`: Horizontal carousel preview to switch Windows wallpapers and dynamically regenerate Material You theme colors on the fly. Automatically scans `%USERPROFILE%\Pictures\Bloom-Wallpapers`, `%USERPROFILE%\Documents\Bloom-Wallpapers`, or `wallpapers/`. *(🎨 Looking for curated wallpapers? Check out [**Bloom_Wallpapers**](https://github.com/Yato-Works/Bloom_Wallpapers)!)*
   - `>scheme`: Switch between Catppuccin (Mocha, Macchiato, Frappé, Latte), Tokyo Night, Dracula, and Nord palettes with split swatches.
   - `>calc`: Instant mathematical expression evaluation powered by built-in expression parser (Qalc-inspired).
   - `>lock`, `>light`, `>dark`, `>snip`, `>folder`, and more.
