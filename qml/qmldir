@@ -1,0 +1,88 @@
+module Bloom
+typeinfo Bloom.qmltypes
+prefer :/qt/Bloom/
+
+# C++ singletons
+singleton Colours 1.0 CaelestiaColours
+singleton Tokens 1.0 CaelestiaTokens
+singleton Config 1.0 CaelestiaConfig
+
+# Existing QML types
+Main 1.0 Main.qml
+GlassPanel 1.0 components/GlassPanel.qml
+SidebarItem 1.0 components/SidebarItem.qml
+WallpaperSelector 1.0 components/WallpaperSelector.qml
+MetricRing 1.0 components/MetricRing.qml
+ForecastItem 1.0 components/ForecastItem.qml
+MaterialIcon 1.0 components/MaterialIcon.qml
+SmartLauncherModal 1.0 components/SmartLauncherModal.qml
+BloomCalculatorModal 1.0 components/BloomCalculatorModal.qml
+BloomDashboardModal 1.0 components/BloomDashboardModal.qml
+BloomLockScreen 1.0 components/BloomLockScreen.qml
+ClockTab 1.0 components/ClockTab.qml
+WeatherTab 1.0 components/WeatherTab.qml
+MediaTab 1.0 components/MediaTab.qml
+SystemHealthTab 1.0 components/SystemHealthTab.qml
+ThemePopover 1.0 components/ThemePopover.qml
+SettingsModal 1.0 components/SettingsModal.qml
+DashboardCard 1.0 components/DashboardCard.qml
+ControlStack 1.0 components/ControlStack.qml
+QuickSettingIcon 1.0 components/QuickSettingIcon.qml
+ForecastDayItem 1.0 components/ForecastDayItem.qml
+WeatherCard 1.0 components/WeatherCard.qml
+SystemInfoCard 1.0 components/SystemInfoCard.qml
+CalendarSpectrumCard 1.0 components/CalendarSpectrumCard.qml
+SystemResourcesTab 1.0 components/SystemResourcesTab.qml
+ResourceCard 1.0 components/ResourceCard.qml
+IOGraphCard 1.0 components/IOGraphCard.qml
+MediaPlayerTab 1.0 components/MediaPlayerTab.qml
+ControlBtn 1.0 components/ControlBtn.qml
+LauncherTab 1.0 components/LauncherTab.qml
+AppGridItem 1.0 components/AppGridItem.qml
+CalendarDetailTab 1.0 components/CalendarDetailTab.qml
+NotificationItem 1.0 components/NotificationItem.qml
+PowerVolumeControls 1.0 components/PowerVolumeControls.qml
+PowerActionBtn 1.0 components/PowerActionBtn.qml
+BluetoothPanel 1.0 components/BluetoothPanel.qml
+BluetoothDevice 1.0 components/BluetoothDevice.qml
+PowerProfileSelector 1.0 components/PowerProfileSelector.qml
+ProfileBtn 1.0 components/ProfileBtn.qml
+ToggleCard 1.0 components/ToggleCard.qml
+ScreenRecorderCard 1.0 components/ScreenRecorderCard.qml
+RecorderBtn 1.0 components/RecorderBtn.qml
+QuickToggleBtn 1.0 components/QuickToggleBtn.qml
+StateLayer 1.0 components/StateLayer.qml
+SwitchButton 1.0 components/SwitchButton.qml
+
+# Caelestia compatibility layer
+CaelestiaShell 1.0 caelestia/CaelestiaShell.qml
+CaelestiaLeftDock 1.0 caelestia/CaelestiaLeftDock.qml
+CaelestiaRightDrawer 1.0 caelestia/CaelestiaRightDrawer.qml
+CaelestiaBottomLauncher 1.0 caelestia/CaelestiaBottomLauncher.qml
+VerticalSlider 1.0 caelestia/VerticalSlider.qml
+CircularProgress 1.0 caelestia/CircularProgress.qml
+DashTab 1.0 caelestia/DashTab.qml
+CaelestiaMediaTab 1.0 caelestia/CaelestiaMediaTab.qml
+PerfTab 1.0 caelestia/PerfTab.qml
+WeatherDetailTab 1.0 caelestia/WeatherDetailTab.qml
+
+# Bloom Top Bar / slide-down panel (redesigned shell chrome)
+BloomShellStyle 1.0 caelestia/BloomShellStyle.qml
+BloomSparkline 1.0 caelestia/BloomSparkline.qml
+BloomMonthGrid 1.0 caelestia/BloomMonthGrid.qml
+BloomTopBar 1.0 caelestia/BloomTopBar.qml
+BloomAppLauncher 1.0 caelestia/BloomAppLauncher.qml
+BloomControlPanel 1.0 caelestia/BloomControlPanel.qml
+BloomAnim 1.0 caelestia/BloomAnim.qml
+BloomIcon 1.0 caelestia/BloomIcon.qml
+BloomDashPanel 1.0 caelestia/BloomDashPanel.qml
+
+# Bloom.Services compatibility layer
+AppLauncher 1.0 services/AppLauncher.qml
+Players 1.0 services/Players.qml
+Weather 1.0 services/Weather.qml
+SysInfo 1.0 services/SysInfo.qml
+
+depends QtQuick
+depends QtQuick.Controls
+depends QtQuick.Layouts

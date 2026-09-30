@@ -19,6 +19,7 @@ class SystemInfoService final : public QObject
     Q_PROPERTY(bool hasBattery READ hasBattery NOTIFY metricsChanged FINAL)
     Q_PROPERTY(int volumeLevel READ volumeLevel NOTIFY metricsChanged FINAL)
     Q_PROPERTY(bool volumeMuted READ volumeMuted NOTIFY metricsChanged FINAL)
+    Q_PROPERTY(int brightnessLevel READ brightnessLevel NOTIFY brightnessChanged FINAL)
 
 public:
     explicit SystemInfoService(QObject *parent = nullptr);
@@ -36,18 +37,22 @@ public:
     [[nodiscard]] bool hasBattery() const noexcept;
     [[nodiscard]] int volumeLevel() const noexcept;
     [[nodiscard]] bool volumeMuted() const noexcept;
+    [[nodiscard]] int brightnessLevel() const noexcept;
 
     Q_INVOKABLE void setVolume(int level);
     Q_INVOKABLE void toggleMute();
+    Q_INVOKABLE void setBrightness(int level);
 
     void start();
 
 signals:
     void metricsChanged();
+    void brightnessChanged(int level);
 
 private:
     void refresh();
     void refreshVolume();
+    void refreshBrightness();
 
     QTimer m_refreshTimer;
     int m_cpuUsage {0};
@@ -59,6 +64,7 @@ private:
     bool m_hasBattery {false};
     int m_volumeLevel {50};
     bool m_volumeMuted {false};
+    int m_brightnessLevel {100};
 
 #ifdef Q_OS_WIN
     // COM interface for volume control

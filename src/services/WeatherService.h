@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <QTimer>
+#include <QVariantList>
 
 #include "ServiceLifecycle.h"
 
@@ -15,6 +16,8 @@ class WeatherService final : public QObject
     Q_PROPERTY(QString humidity READ humidity NOTIFY weatherChanged FINAL)
     Q_PROPERTY(QString pressure READ pressure NOTIFY weatherChanged FINAL)
     Q_PROPERTY(QString updatedAt READ updatedAt NOTIFY weatherChanged FINAL)
+    Q_PROPERTY(QString feelsLike READ feelsLike NOTIFY weatherChanged FINAL)
+    Q_PROPERTY(QVariantList forecast READ forecast NOTIFY weatherChanged FINAL)
     Q_PROPERTY(bool ready READ isReady NOTIFY lifecycleChanged FINAL)
 
 public:
@@ -31,6 +34,8 @@ public:
     [[nodiscard]] QString humidity() const;
     [[nodiscard]] QString pressure() const;
     [[nodiscard]] QString updatedAt() const;
+    [[nodiscard]] QString feelsLike() const noexcept { return m_feelsLike; }
+    [[nodiscard]] QVariantList forecast() const noexcept { return m_forecast; }
     [[nodiscard]] bool isReady() const noexcept;
 
     Q_INVOKABLE void reload();
@@ -44,6 +49,12 @@ signals:
 
 private:
     void applyDemoForecast();
+    void fetchGeoLocation();
+    void fetchGeoLocationFallback();
+    void fetchWeather(double latitude, double longitude);
+    void finishReady(bool success, const QString &message);
+    static QString conditionFromCode(int weatherCode);
+    static QString emojiFromCode(int weatherCode);
 
     ServiceLifecycle m_lifecycle {ServiceLifecycle::Created};
     QTimer m_reloadTimer;
@@ -54,4 +65,9 @@ private:
     QString m_humidity;
     QString m_pressure;
     QString m_updatedAt;
+    QString m_feelsLike;
+    QVariantList m_forecast;
+    class QNetworkAccessManager *m_net {nullptr};
+    double m_latitude {0.0};
+    double m_longitude {0.0};
 };

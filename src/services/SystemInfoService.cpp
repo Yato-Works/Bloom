@@ -7,6 +7,10 @@
 #include <windows.h>
 #include <mmdeviceapi.h>
 #include <endpointvolume.h>
+#include <physicalmonitorenumerationapi.h>
+#include <highlevelmonitorconfigurationapi.h>
+#include <vector>
+#include <algorithm>
 
 namespace {
 quint64 previousIdle = 0;
@@ -41,9 +45,9 @@ SystemInfoService::SystemInfoService(QObject *parent) : QObject(parent)
     CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 
     // Get IMMDeviceEnumerator and IAudioEndpointVolume
-    // Correct GUIDs from Windows SDK (mitigated for MinGW)
+    // CLSID_MMDeviceEnumerator = {BCDE0395-E52F-467C-8E3D-C4579291692E}
     IMMDeviceEnumerator *enumerator = nullptr;
-    const CLSID CLSID_MMDeviceEnumerator_ = {0xbcde0395, 0xe52f, 0x4670, {0x8d, 0x3d, 0xc4, 0x57, 0x92, 0x91, 0x69, 0x2e}};
+    const CLSID CLSID_MMDeviceEnumerator_ = {0xbcde0395, 0xe52f, 0x467c, {0x8e, 0x3d, 0xc4, 0x57, 0x92, 0x91, 0x69, 0x2e}};
     const IID IID_IMMDeviceEnumerator_ = {0xa95664d2, 0x9614, 0x4f35, {0xa7, 0x46, 0xde, 0x8d, 0xb6, 0x36, 0x17, 0xe6}};
 
     HRESULT hr = CoCreateInstance(CLSID_MMDeviceEnumerator_, nullptr, CLSCTX_ALL,
@@ -59,12 +63,28 @@ SystemInfoService::SystemInfoService(QObject *parent) : QObject(parent)
             device->Release();
         }
     }
+
+    // Initial brightness probe
+    refreshBrightness();
 #endif
 }
 
 SystemInfoService::~SystemInfoService()
 {
 #ifdef Q_OS_WIN
+    // Reset gamma ramp to 100% on application exit so screen is clean
+    HDC hdc = GetDC(NULL);
+    if (hdc) {
+        WORD ramp[3][256];
+        for (int i = 0; i < 256; ++i) {
+            int val = i * 256;
+            if (val > 65535) val = 65535;
+            ramp[0][i] = ramp[1][i] = ramp[2][i] = static_cast<WORD>(val);
+        }
+        SetDeviceGammaRamp(hdc, ramp);
+        ReleaseDC(NULL, hdc);
+    }
+
     if (m_volumeInterface) {
         static_cast<IAudioEndpointVolume*>(m_volumeInterface)->Release();
         m_volumeInterface = nullptr;
@@ -89,6 +109,7 @@ bool SystemInfoService::batteryCharging() const noexcept { return m_batteryCharg
 bool SystemInfoService::hasBattery() const noexcept { return m_hasBattery; }
 int SystemInfoService::volumeLevel() const noexcept { return m_volumeLevel; }
 bool SystemInfoService::volumeMuted() const noexcept { return m_volumeMuted; }
+int SystemInfoService::brightnessLevel() const noexcept { return m_brightnessLevel; }
 
 void SystemInfoService::start()
 {
@@ -122,6 +143,68 @@ void SystemInfoService::toggleMute()
             vol->SetMute(!muted, nullptr);
             m_volumeMuted = !muted;
             emit metricsChanged();
+        }
+    }
+#endif
+}
+
+void SystemInfoService::setBrightness(int level)
+{
+    level = qBound(10, level, 100);
+    m_brightnessLevel = level;
+
+#ifdef Q_OS_WIN
+    // 1. Hardware DDC/CI monitor brightness via Dxva2
+    HMONITOR hMon = MonitorFromWindow(GetDesktopWindow(), MONITOR_DEFAULTTOPRIMARY);
+    if (hMon) {
+        DWORD numMon = 0;
+        if (GetNumberOfPhysicalMonitorsFromHMONITOR(hMon, &numMon) && numMon > 0) {
+            std::vector<PHYSICAL_MONITOR> monitors(numMon);
+            if (GetPhysicalMonitorsFromHMONITOR(hMon, numMon, monitors.data())) {
+                for (DWORD i = 0; i < numMon; ++i) {
+                    SetMonitorBrightness(monitors[i].hPhysicalMonitor, static_cast<DWORD>(level));
+                }
+                DestroyPhysicalMonitors(numMon, monitors.data());
+            }
+        }
+    }
+
+    // 2. High-compatibility GDI Gamma Ramp (Works on all Windows machines, laptops, VMs, external displays)
+    HDC hdc = GetDC(NULL);
+    if (hdc) {
+        WORD ramp[3][256];
+        const double scale = level / 100.0;
+        for (int i = 0; i < 256; ++i) {
+            int val = static_cast<int>(i * 256 * scale);
+            if (val > 65535) val = 65535;
+            ramp[0][i] = ramp[1][i] = ramp[2][i] = static_cast<WORD>(val);
+        }
+        SetDeviceGammaRamp(hdc, ramp);
+        ReleaseDC(NULL, hdc);
+    }
+#endif
+
+    emit brightnessChanged(level);
+    emit metricsChanged();
+}
+
+void SystemInfoService::refreshBrightness()
+{
+#ifdef Q_OS_WIN
+    HMONITOR hMon = MonitorFromWindow(GetDesktopWindow(), MONITOR_DEFAULTTOPRIMARY);
+    if (hMon) {
+        DWORD numMon = 0;
+        if (GetNumberOfPhysicalMonitorsFromHMONITOR(hMon, &numMon) && numMon > 0) {
+            std::vector<PHYSICAL_MONITOR> monitors(numMon);
+            if (GetPhysicalMonitorsFromHMONITOR(hMon, numMon, monitors.data())) {
+                DWORD minB = 0, curB = 100, maxB = 100;
+                if (GetMonitorBrightness(monitors[0].hPhysicalMonitor, &minB, &curB, &maxB)) {
+                    if (maxB > minB) {
+                        m_brightnessLevel = static_cast<int>((curB - minB) * 100 / (maxB - minB));
+                    }
+                }
+                DestroyPhysicalMonitors(numMon, monitors.data());
+            }
         }
     }
 #endif

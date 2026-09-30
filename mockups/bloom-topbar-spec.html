@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bloom · Top Bar &amp; Slide-Down Control Panel — Redesign Spec</title>
+<style>
+  /* Bloom redesign tokens — deep navy surfaces, pastel-pink accent,
+     sharp 6–8px radii, frosted-glass blur. (yasb / Hyprland bar vibes) */
+  :root {
+    --navy-900: #0e1119;
+    --navy-800: #131720;
+    --navy-700: #171c28;
+    --navy-600: #1d2533;
+    --navy-500: #242d3e;
+
+    --t-hi:   #eceef4;
+    --t-mid:  #b4b8c7;
+    --t-low:  #798096;
+
+    --pink:      #edb3d1;
+    --pink-soft: rgba(237, 179, 209, 0.14);
+    --blue:      #93b7f2;
+    --green:     #8fdcae;
+    --amber:     #f2c98a;
+    --red:       #ef9494;
+
+    --line:      rgba(255, 255, 255, 0.08);
+    --line-soft: rgba(255, 255, 255, 0.05);
+
+    --r-s: 6px;   /* chips / buttons */
+    --r-m: 8px;   /* cards / panel */
+    --blur: 22px;
+
+    --font: 'Inter', 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif;
+    --mono: 'Cascadia Code', 'JetBrains Mono', 'IBM Plex Mono', Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body { font-family: var(--font); color: var(--t-hi); background: var(--navy-900); }
+
+  /* ════════ BACKGROUND — a Gemini-style chat app ════════ */
+  .gemini {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(900px 500px at 75% -10%, rgba(122, 96, 162, 0.14), transparent 60%),
+      radial-gradient(700px 420px at 8% 110%, rgba(48, 104, 122, 0.12), transparent 60%),
+      #131316;
+  }
+  .g-bar {
+    position: absolute; top: 0; left: 0; right: 0; height: 56px;
+    display: flex; align-items: center; gap: 14px; padding: 0 20px;
+  }
+  .g-brand { display: flex; align-items: center; gap: 10px; color: #e8e8e8; font-weight: 600; font-size: 15px; }
+  .g-star { color: #a2c7ff; font-size: 18px; }
+  .g-chip {
+    display: flex; align-items: center; gap: 8px;
+    border: 1px solid #3c3c40; border-radius: 999px; padding: 5px 12px;
+    color: #c9c9c9; font-size: 12px;
+  }
+  .g-chip path { fill: #c9c9c9; }
+  .g-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+  .g-icon {
+    width: 34px; height: 34px; border-radius: 50%;
+    display: grid; place-items: center; color: #d4d4d4; font-size: 16px; cursor: pointer;
+  }
+  .g-icon:hover { background: rgba(255,255,255,.08); }
+  .g-avatar {
+    width: 32px; height: 32px; border-radius: 50%; margin-left: 8px;
+    background: linear-gradient(135deg, #c4b1ff, #1b1b1f 70%);
+    display: grid; place-items: center; font-size: 13px;
+  }
+  .g-rail {
+    position: absolute; top: 56px; left: 0; bottom: 0; width: 68px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 14px;
+  }
+  .g-rail .g-icon { border-radius: 8px; width: 46px; height: 46px; font-size: 17px; }
+  .g-rail .g-icon.on { background: rgba(168, 199, 250, 0.16); color: #cfdfff; }
+  .g-main {
+    position: absolute; top: 66px; left: 90px; right: 90px; bottom: 20px;
+    display: flex; flex-direction: column; align-items: center; padding-top: 6vh;
+  }
+  .g-hello { font-size: clamp(22px, 3vw, 34px); font-weight: 400; letter-spacing: -.3px; }
+  .g-hello b { font-weight: 600; }
+  .g-chips { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; justify-content: center; max-width: 640px; }
+  .g-chipx {
+    border: 1px solid #3a3a3e; background: #1a1a1e;
+    padding: 10px 14px; border-radius: 10px; color: #dbdbdb; font-size: 13px;
+  }
+  .g-convo { margin-top: 26px; width: min(680px, 100%); display: flex; flex-direction: column; gap: 14px; }
+  .msg { max-width: 92%; font-size: 13.5px; line-height: 1.6; }
+  .msg.user { align-self: flex-end; background: #2b695d; padding: 10px 14px; border-radius: 16px 16px 4px 16px; color: #e7f5ef; }
+  .msg.bot { align-self: flex-start; background: #1e1e22; border: 1px solid #2c2c31; padding: 12px 16px; border-radius: 16px 16px 16px 4px; color: #c9c9ce; }
+  .msg.bot b { color: #ececec; }
+  .msg.bot ul { margin: 8px 0 0 18px; display: flex; flex-direction: column; gap: 6px; }
+  .msg.bot li::marker { color: #9d7bd8; }
+  .g-composer {
+    position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%);
+    width: min(720px, calc(100% - 36px));
+    background: #1e1e22; border: 1px solid #3c3c40; border-radius: 999px;
+    padding: 8px 8px 8px 18px; display: flex; align-items: center; gap: 10px;
+  }
+  .g-composer .ph { flex: 1; color: #6f6f76; font-size: 13.5px; }
+  .g-send {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, #c4c7c5, #9fb3a8); display: grid; place-items: center;
+  }
+  .g-send i { width: 12px; height: 12px; border-right: 2px solid #222; border-bottom: 2px solid #222; transform: rotate(-45deg); margin-top: -3px; }
+
+  /* ════════ BLOOM — edge hint (clean state) ════════ */
+  .bloom { position: absolute; inset: 0; pointer-events: none; z-index: 30; }
+  .bloom * { pointer-events: auto; }
+
+  .edge-hint {
+    position: absolute; top: 2px; left: 50%; transform: translateX(-50%);
+    background: rgba(19, 23, 32, 0.86); border: 1px solid var(--line);
+    border-radius: 999px; padding: 3px 12px; font-size: 11px; color: var(--t-mid);
+    display: flex; align-items: center; gap: 7px;
+    backdrop-filter: blur(10px); transition: opacity .25s;
+    box-shadow: 0 6px 24px rgba(0,0,0,.35);
+  }
+  .edge-hint .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--pink); box-shadow: 0 0 8px var(--pink); }
+
+  /* ════════ BLOOM — top bar stack ════════ */
+  .stack {
+    position: absolute; top: 0; left: 0; right: 0;
+    transform: translateY(0);
+    transition: transform .34s cubic-bezier(.22, .8, .28, 1), opacity .28s;
+  }
+  body.clean .stack { transform: translateY(-120%); opacity: 0; }
+  body.clean .edge-hint { opacity: 1; }
+  body.active .edge-hint { opacity: 0; }
+
+  .bar {
+    position: relative;
+    height: 46px; display: flex; align-items: center;
+    padding: 0 10px;
+    background: linear-gradient(rgba(20, 24, 33, 0.97), rgba(21, 25, 35, 0.92));
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 12px 40px rgba(0,0,0,.45);
+  }
+  .bar .blur {
+    position: absolute; inset: 0;
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  }
+  .seg { display: flex; align-items: center; }
+  .divider { width: 1px; height: 22px; margin: 0 12px; background: var(--line-soft); }
+.logo {
+    width: 30px; height: 30px; border-radius: var(--r-s);
+    background: linear-gradient(135deg, var(--pink), #b27a9e);
+    display: grid; place-items: center; color: #22141c; font-size: 14px;
+    box-shadow: 0 0 14px rgba(237, 179, 209, 0.35);
+  }
+  .word { font-size: 13px; font-weight: 600; letter-spacing: .2px; margin-left: 9px; }
+
+  .btn {
+    width: 30px; height: 30px; border-radius: var(--r-s);
+    display: grid; place-items: center; cursor: pointer; color: var(--t-mid);
+    font-size: 14px; transition: background .15s, color .15s;
+    border: 1px solid transparent;
+  }
+  .btn:hover { background: rgba(255,255,255,.07); color: var(--t-hi); }
+  .btn.on { background: var(--pink-soft); border-color: rgba(237,179,209,.28); color: var(--pink); }
+  .btn svg { width: 15px; height: 15px; }
+  .btn svg path { fill: currentColor; }
+
+  .ws { display: flex; gap: 4px; }
+  .ws span {
+    width: 24px; height: 24px; border-radius: var(--r-s); cursor: pointer;
+    display: grid; place-items: center; color: var(--t-low); font-size: 11px;
+    transition: all .15s; border: 1px solid transparent;
+  }
+  .ws span:hover { background: rgba(255,255,255,.07); color: var(--t-mid); }
+  .ws span.on { background: var(--pink-soft); color: var(--pink); border-color: rgba(237,179,209,.28); }
+
+  .chip {
+    display: flex; align-items: center; gap: 7px;
+    height: 30px; padding: 0 10px; border-radius: var(--r-s);
+    background: rgba(255,255,255,.05); border: 1px solid var(--line-soft);
+    font-size: 11.5px; color: var(--t-mid); white-space: nowrap; cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .chip:hover { background: rgba(255,255,255,.08); border-color: var(--line); }
+  .chip .k { color: var(--t-low); font-size: 10px; letter-spacing: .4px; text-transform: uppercase; }
+  .chip .v { color: var(--t-hi); font-family: var(--mono); font-size: 11.5px; }
+  .chip .spark { display: block; width: 52px; height: 16px; }
+  .chip.wx .v { color: var(--pink); font-family: var(--font); font-weight: 600; }
+  .chip .glyph { font-size: 13px; }
+
+  .media { display: flex; align-items: center; gap: 4px; }
+
+  .vol { display: flex; align-items: center; gap: 6px; }
+  .vol .bar { width: 52px; height: 3px; border-radius: 2px; background: rgba(255,255,255,.12); position: relative; }
+  .vol .bar i { position: absolute; inset: 0 auto 0 0; width: 62%; height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--pink), #d18fb0); }
+
+  .clock { display: flex; flex-direction: column; align-items: flex-end; margin-right: 2px; }
+  .clock .t { font-family: var(--mono); font-size: 12.5px; color: var(--t-hi); letter-spacing: .2px; }
+  .clock .d { font-size: 9.5px; color: var(--t-low); letter-spacing: .3px; }
+
+  /* ════════ slide-down control panel ════════ */
+  .panel {
+    background: rgba(23, 28, 40, 0.72);
+    backdrop-filter: blur(var(--blur)) saturate(1.15); -webkit-backdrop-filter: blur(var(--blur)) saturate(1.15);
+    border-bottom: 1px solid var(--line);
+    border-radius: 0 0 var(--r-m) var(--r-m);
+    padding: 10px 10px 12px;
+    box-shadow: 0 26px 70px rgba(0,0,0,.55);
+  }
+  .panel .row { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 8px; }
+  .card {
+    background: rgba(29, 37, 51, 0.62); border: 1px solid var(--line-soft);
+    border-radius: var(--r-m); padding: 10px 12px; min-height: 208px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .card .h { font-size: 10px; letter-spacing: .6px; text-transform: uppercase; color: var(--t-low); display: flex; align-items: center; gap: 6px; }
+  .card .h em { font-style: normal; width: 6px; height: 6px; border-radius: 2px; background: var(--pink); box-shadow: 0 0 8px var(--pink); }
+.wx-now { display: flex; align-items: center; gap: 12px; }
+  .wx-temp { font-size: 40px; font-weight: 300; letter-spacing: -1.5px; line-height: 1; }
+  .wx-temp b { color: var(--pink); font-weight: 600; }
+  .wx-state { font-size: 13.5px; color: var(--t-hi); font-weight: 500; }
+  .wx-city { font-size: 11px; color: var(--t-low); margin-top: 2px; }
+  .wx-meta { display: flex; gap: 16px; margin-top: 4px; }
+  .wx-meta div { font-size: 11px; color: var(--t-mid); }
+  .wx-meta b { color: var(--t-hi); font-family: var(--mono); font-weight: 600; }
+  .wx-meta .k { font-size: 9.5px; color: var(--t-low); display: block; }
+  .forecast { display: flex; justify-content: space-between; margin-top: auto; border-top: 1px solid var(--line-soft); padding-top: 8px; }
+  .fc { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 44px; }
+  .fc .d { font-size: 10px; color: var(--t-low); }
+  .fc .g { font-size: 15px; }
+  .fc .t { font-size: 11px; color: var(--t-hi); font-family: var(--mono); }
+  .fc .t i { font-style: normal; color: var(--t-low); }
+
+  .sys { display: flex; flex-direction: column; gap: 9px; }
+  .srow { display: flex; align-items: center; gap: 9px; }
+  .srow .meta { display: flex; flex-direction: column; width: 62px; flex-shrink: 0; }
+  .srow .meta .k { font-size: 9.5px; color: var(--t-low); }
+  .srow .meta .v { font-size: 12.5px; font-family: var(--mono); color: var(--t-hi); }
+  .srow svg { flex: 1; height: 30px; }
+  .srow .pct { width: 38px; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--t-low); }
+  .srow.cpu .meta .v { color: var(--pink); }
+  .srow.ram .meta .v { color: var(--blue); }
+  .srow.net .meta .v { color: var(--green); }
+  .sys-foot { margin-top: auto; display: flex; gap: 8px; }
+  .tchip { flex: 1; border: 1px solid var(--line-soft); border-radius: var(--r-s); padding: 6px 8px; text-align: center; background: rgba(255,255,255,.03); }
+  .tchip .k { font-size: 9px; color: var(--t-low); display: block; }
+  .tchip .v { font-size: 12px; font-family: var(--mono); color: var(--t-hi); }
+
+  .cal .h2 { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--t-hi); font-weight: 500; }
+  .cal .h2 span { color: var(--t-low); font-family: var(--mono); font-size: 10.5px; }
+  .calgrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-top: 6px; }
+  .calgrid .dow { font-size: 9px; color: var(--t-low); text-align: center; padding: 3px 0; }
+  .calgrid .day {
+    height: 22px; display: grid; place-items: center; border-radius: var(--r-s);
+    font-size: 11px; color: var(--t-mid); font-family: var(--mono);
+  }
+  .calgrid .day.out { color: rgba(121, 128, 150, 0.35); }
+  .calgrid .day.today { background: var(--pink); color: #2c1222; font-weight: 700; box-shadow: 0 0 12px rgba(237,179,209,.5); }
+  .cal-note { font-size: 10px; color: var(--t-low); margin-top: auto; }
+
+  /* ════════ launcher dropdown ════════ */
+  .launcher {
+    position: absolute; top: 46px; left: 82px; width: 340px;
+    background: rgba(21, 25, 35, 0.97);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--line); border-radius: var(--r-m);
+    box-shadow: 0 24px 60px rgba(0,0,0,.55);
+    padding: 8px; display: flex; flex-direction: column; gap: 4px;
+    opacity: 0; transform: translateY(-8px) scale(.98); pointer-events: none;
+    transition: .18s ease;
+  }
+  body.show-launcher .launcher { opacity: 1; transform: none; pointer-events: auto; }
+  .launcher .search {
+    display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+    background: rgba(255,255,255,.05); border: 1px solid var(--line);
+    border-radius: var(--r-s); color: var(--t-low); font-size: 12px;
+  }
+  .launcher .search input {
+    flex: 1; background: transparent; border: 0; outline: 0; color: var(--t-hi);
+    font-family: var(--font); font-size: 12.5px;
+  }
+  .launcher .search input::placeholder { color: var(--t-low); }
+  .lres { max-height: 236px; overflow: hidden; }
+  .litem {
+    display: flex; align-items: center; gap: 10px; padding: 7px 10px;
+    border-radius: var(--r-s); cursor: pointer; transition: background .12s;
+  }
+  .litem:hover, .litem.on { background: var(--pink-soft); }
+  .litem .i { width: 24px; height: 24px; border-radius: var(--r-s); background: rgba(255,255,255,.07); display: grid; place-items: center; font-size: 13px; }
+  .litem .n { font-size: 12.5px; color: var(--t-hi); }
+  .litem .d { margin-left: auto; font-size: 10px; color: var(--t-low); }
+
+  /* ════════ annotations & controls ════════ */
+  .legend {
+    position: absolute; left: 14px; bottom: 14px; z-index: 60;
+    width: 300px; background: rgba(14, 17, 25, 0.82);
+    backdrop-filter: blur(16px); border: 1px solid var(--line); border-radius: var(--r-m);
+    padding: 12px 14px; font-size: 11px; color: var(--t-mid); line-height: 1.55;
+    box-shadow: 0 18px 50px rgba(0,0,0,.5);
+  }
+  .legend h3 { font-size: 11px; letter-spacing: .6px; text-transform: uppercase; color: var(--pink); margin-bottom: 6px; }
+  .legend ul { margin-left: 16px; }
+  .legend small { color: var(--t-low); }
+  .modes { position: absolute; right: 14px; bottom: 14px; z-index: 60; display: flex; gap: 6px; }
+  .mode {
+    padding: 7px 14px; border-radius: var(--r-s); cursor: pointer; font-size: 11px;
+    background: rgba(255,255,255,.05); border: 1px solid var(--line); color: var(--t-mid);
+    transition: .15s; backdrop-filter: blur(10px);
+  }
+  .mode:hover { color: var(--t-hi); border-color: rgba(237,179,209,.4); }
+  .mode.on { background: var(--pink-soft); color: var(--pink); border-color: rgba(237,179,209,.4); }
+  .mode .kbd { font-family: var(--mono); font-size: 9px; opacity: .7; margin-right: 4px; }
+</style>
+<body class="active">
+
+  <!-- ════════ BACKGROUND · Gemini chat (repr.) ════════ -->
+  <div class="gemini">
+    <div class="g-bar">
+      <div class="g-brand"><span class="g-star">✦</span> Gemini</div>
+      <div class="g-chip">
+        <svg width="13" height="13" viewBox="0 0 24 24"><path d="M2 16.5a8.5 8.5 0 0 1 8.5-8.5 6.6 6.6 0 0 1 6.5 5.2A5.2 5.2 0 0 1 11 20H2.9a.9.9 0 0 1-.9-.9v-2.6Z" fill="currentColor"/></svg>
+        AIチャット
+      </div>
+      <div class="g-right">
+        <div class="g-icon">＋</div>
+        <div class="g-icon">↗</div>
+        <div class="g-icon">⋯</div>
+        <div class="g-avatar">◉</div>
+      </div>
+    </div>
+    <div class="g-rail">
+      <div class="g-icon on">✷</div>
+      <div class="g-icon">✦</div>
+      <div class="g-icon">★</div>
+      <div class="g-icon">◌</div>
+      <div class="g-icon">⚙</div>
+    </div>
+    <div class="g-main">
+      <div class="g-hello">こんにちは、<b>Sora</b>🌸</div>
+      <div class="g-chips">
+        <div class="g-chipx">今日のタスクを整理して</div>
+        <div class="g-chipx">BloomのUI改善案を出して</div>
+        <div class="g-chipx">新しいアイデアは？</div>
+        <div class="g-chipx">ランチのおすすめ</div>
+      </div>
+      <div class="g-convo">
+        <div class="msg user">yasbみたいなトップバーのモックを描いてほしい</div>
+        <div class="msg bot">
+          <b>了解です。</b>中央の大型ダッシュボードを廃止し、カーソルを画面上端へ寄せるだけで現れる <b>トップバー＋スライドダウン・パネル</b> に再設計しました。
+          <ul>
+            <li>左：Bloomロゴ ＋ 検索付きアプリランチャー</li>
+            <li>中央：CPU / RAM / ネットワーク ⋅ 天気 ⋅ カレンダー要約</li>
+            <li>右：コンパクトなメディア・コントロール ＋ 日時</li>
+            <li>下に伸びるGlassパネル：詳細な天気・月間カレンダー・グラフ</li>
+          </ul>
+          このページの上端にカーソルを合わせて、実際の挙動を確認できます。
+        </div>
+      </div>
+    </div>
+    <div class="g-composer">
+      <div class="ph">Gemini に質問する…</div>
+      <div class="g-send"><i></i></div>
+    </div>
+<!-- ════════ BLOOM chrome ════════ -->
+  <div class="bloom">
+    <div class="edge-hint"><span class="dot"></span>上端にカーソルを移動 — Bloom</div>
+
+    <div class="stack" id="stack">
+      <!-- Top Bar -->
+      <div class="bar">
+        <div class="blur"></div>
+
+        <!-- LEFT -->
+        <div class="seg">
+          <div class="logo">✦</div>
+          <div class="word">Bloom</div>
+          <span class="divider" style="margin-left:12px"></span>
+          <div class="btn on" id="btnLaunch" title="アプリランチャー">
+            <svg viewBox="0 0 24 24"><path d="M9.5 3a6.5 6.5 0 1 0 4 11.6L19 20l1.6-1.6-5.5-5.5A6.5 6.5 0 0 0 9.5 3Zm0 2a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Z"/></svg>
+          </div>
+          <span class="divider"></span>
+          <div class="ws">
+            <span class="on">1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+          </div>
+        </div>
+        <span class="divider"></span>
+
+        <!-- CENTER -->
+        <div class="chip" title="CPU負荷">
+          <span class="k">CPU</span>
+          <svg class="spark" viewBox="0 0 52 16" preserveAspectRatio="none">
+            <path d="M0 12 L5 9 L10 11 L15 5 L20 7 L25 3 L30 6 L35 4 L40 7 L45 2 L52 4 Z" fill="rgba(237,179,209,.16)"/>
+            <path d="M0 12 L5 9 L10 11 L15 5 L20 7 L25 3 L30 6 L35 4 L40 7 L45 2 L52 4" fill="none" stroke="#edb3d1" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+          </svg>
+          <span class="v">42%</span>
+        </div>
+        <div class="chip" title="メモリ使用率">
+          <span class="k">RAM</span>
+          <svg class="spark" viewBox="0 0 52 16" preserveAspectRatio="none">
+            <path d="M0 13 L6 10 L11 12 L16 8 L21 10 L26 6 L31 7 L36 5 L41 8 L46 4 L52 5 Z" fill="rgba(147,183,242,.16)"/>
+            <path d="M0 13 L6 10 L11 12 L16 8 L21 10 L26 6 L31 7 L36 5 L41 8 L46 4 L52 5" fill="none" stroke="#93b7f2" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+          </svg>
+          <span class="v">40%</span>
+        </div>
+        <div class="chip" title="ネットワーク">
+          <span class="k">NET</span>
+          <svg class="spark" viewBox="0 0 52 16" preserveAspectRatio="none">
+            <path d="M0 14 L6 11 L11 13 L16 8 L21 10 L26 5 L31 8 L36 3 L41 6 L46 1 L52 3 Z" fill="rgba(143,220,174,.14)"/>
+            <path d="M0 14 L6 11 L11 13 L16 8 L21 10 L26 5 L31 8 L36 3 L41 6 L46 1 L52 3" fill="none" stroke="#8fdcae" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+          </svg>
+          <span class="v">1.2 MB/s</span>
+        </div>
+        <div class="chip wx" title="天気">
+          <span class="glyph">🌦️</span>
+          <span class="v">29° Drizzle</span>
+        </div>
+        <div class="chip" title="カレンダー">
+          <span class="k">TODAY</span>
+          <span class="v">Sep 5</span>
+        </div>
+        <span style="flex:1"></span>
+
+        <!-- RIGHT -->
+        <div class="media">
+          <div class="btn">⏮</div>
+          <div class="btn">⏸</div>
+          <div class="btn">⏭</div>
+        </div>
+        <div class="chip" title="メディア" style="font-size:11px">Nothing&nbsp;Playing</div>
+        <span class="divider"></span>
+        <div class="vol">
+          <span style="font-size:13px">🔊</span>
+          <div class="bar"><i></i></div>
+          <span style="font-family:var(--mono);font-size:10.5px;color:var(--t-low);width:30px">62%</span>
+        </div>
+        <span class="divider"></span>
+        <div class="clock">
+          <div class="t">14:32</div>
+          <div class="d">SAT · SEP 5 2026</div>
+        </div>
+        <div style="width:8px"></div>
+        <div class="btn" id="btnPin" title="ピン留め" style="width:32px;height:32px">
+          <svg viewBox="0 0 24 24"><path d="M16 9V5h2V3H6v2h2v4l-2 4v2h5v5l1 1 1-1v-5h5v-2l-2-4Z"/></svg>
+        </div>
+      </div>
+<div class="panel">
+        <div class="row">
+
+          <!-- Weather detail -->
+          <div class="card">
+            <div class="h"><em></em>Weather — 詳細</div>
+            <div class="wx-now">
+              <div class="wx-temp">29<b>°</b></div>
+              <div style="line-height:1.4">
+                <div class="wx-state">🌦️ Drizzle</div>
+                <div class="wx-city">Tokyo, Japan · 09:00更新</div>
+              </div>
+            </div>
+            <div class="wx-meta">
+              <div><b>68%</b><span class="k">湿度</span></div>
+              <div><b>12 km/h</b><span class="k">風</span></div>
+              <div><b>1012 hPa</b><span class="k">気圧</span></div>
+            </div>
+            <div class="forecast">
+              <div class="fc"><span class="d">SAT</span><span class="g">🌦️</span><span class="t">29<i>°</i></span></div>
+              <div class="fc"><span class="d">SUN</span><span class="g">☀️</span><span class="t">31<i>°</i></span></div>
+              <div class="fc"><span class="d">MON</span><span class="g">🌤️</span><span class="t">30<i>°</i></span></div>
+              <div class="fc"><span class="d">TUE</span><span class="g">☁️</span><span class="t">27<i>°</i></span></div>
+              <div class="fc"><span class="d">WED</span><span class="g">🌧️</span><span class="t">24<i>°</i></span></div>
+            </div>
+          </div>
+  </div>
+<!-- System monitor -->
+          <div class="card sys">
+            <div class="h"><em></em>System Monitor</div>
+            <div class="srow cpu">
+              <div class="meta"><span class="k">CPU</span><span class="v">42%</span></div>
+              <svg viewBox="0 0 120 30" preserveAspectRatio="none">
+                <path d="M0 26 L10 22 L20 24 L30 13 L40 17 L50 9 L60 14 L70 10 L80 16 L90 7 L100 12 L110 4 L120 8 Z" fill="rgba(237,179,209,.18)"/>
+                <path d="M0 26 L10 22 L20 24 L30 13 L40 17 L50 9 L60 14 L70 10 L80 16 L90 7 L100 12 L110 4 L120 8" fill="none" stroke="#edb3d1" stroke-width="1.6"/>
+              </svg>
+              <span class="pct">42%</span>
+            </div>
+            <div class="srow ram">
+              <div class="meta"><span class="k">MEMORY</span><span class="v">6.4 / 16 GB</span></div>
+              <svg viewBox="0 0 120 30" preserveAspectRatio="none">
+                <path d="M0 28 L10 25 L20 26 L30 20 L40 22 L50 17 L60 19 L70 14 L80 16 L90 11 L100 13 L110 9 L120 10 Z" fill="rgba(147,183,242,.16)"/>
+                <path d="M0 28 L10 25 L20 26 L30 20 L40 22 L50 17 L60 19 L70 14 L80 16 L90 11 L100 13 L110 9 L120 10" fill="none" stroke="#93b7f2" stroke-width="1.6"/>
+              </svg>
+              <span class="pct">40%</span>
+            </div>
+            <div class="srow net">
+              <div class="meta"><span class="k">NETWORK</span><span class="v">↓1.2 / ↑0.3</span></div>
+              <svg viewBox="0 0 120 30" preserveAspectRatio="none">
+                <path d="M0 30 L10 27 L20 29 L30 22 L40 25 L50 18 L60 21 L70 15 L80 18 L90 12 L100 15 L110 8 L120 11 Z" fill="rgba(143,220,174,.14)"/>
+                <path d="M0 30 L10 27 L20 29 L30 22 L40 25 L50 18 L60 21 L70 15 L80 18 L90 12 L100 15 L110 8 L120 11" fill="none" stroke="#8fdcae" stroke-width="1.6"/>
+              </svg>
+              <span class="pct">MB/s</span>
+            </div>
+            <div class="sys-foot">
+              <div class="tchip"><span class="k">UPTIME</span><span class="v">3h 12m</span></div>
+              <div class="tchip"><span class="k">BATTERY</span><span class="v">86% ⚡</span></div>
+              <div class="tchip"><span class="k">VOLUME</span><span class="v">62%</span></div>
+            </div>
+          </div>
+<!-- Calendar -->
+          <div class="card cal">
+            <div class="h2">September 2026 <span>SEP</span></div>
+            <div class="calgrid" id="calgrid"></div>
+            <div class="cal-note">今日 9/5 — 次の予定: 14:30 プレゼン準備 · 19:00 QAチェック</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- App launcher dropdown -->
+      <div class="launcher" id="launcher">
+        <div class="search">
+          <svg width="14" height="14" viewBox="0 0 24 24"><path d="M9.5 3a6.5 6.5 0 1 0 4 11.6L19 20l1.6-1.6-5.5-5.5A6.5 6.5 0 0 0 9.5 3Zm0 2a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Z" fill="currentColor"/></svg>
+          <input placeholder="アプリを検索…（Chrome, VS Code, …）" autocomplete="off">
+        </div>
+        <div class="lres">
+          <div class="litem on"><span class="i">🌐</span><span class="n">Chrome</span><span class="d">ブラウザ</span></div>
+          <div class="litem"><span class="i">🧩</span><span class="n">VS Code</span><span class="d">開発</span></div>
+          <div class="litem"><span class="i">💻</span><span class="n">Terminal</span><span class="d">ツール</span></div>
+          <div class="litem"><span class="i">🎵</span><span class="n">Spotify</span><span class="d">メディア</span></div>
+          <div class="litem"><span class="i">📝</span><span class="n">Notion</span><span class="d">ノート</span></div>
+          <div class="litem"><span class="i">🧮</span><span class="n">Calculator</span><span class="d">アクセサリ</span></div>
+          <div class="litem"><span class="i">⚙️</span><span class="n">Settings</span><span class="d">システム</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- annotations & controls -->
+    <div class="modes">
+      <div class="mode" id="mClean"><span class="kbd">1</span>クリーン (アイドル)</div>
+      <div class="mode on" id="mActive"><span class="kbd">2</span>アクティブ (上端ホバー)</div>
+    </div>
+    <div class="legend">
+      <h3>Bloom リデザイン — 設計メモ</h3>
+      <ul>
+        <li>中央ダッシュボードを<b>撤去</b>。上端ホバーでバーがスライドイン</li>
+        <li>背景は純黒でなく深みのある<b>ネイビー</b>（#131720系）</li>
+        <li>アクセントは<b>パステルピンク</b>（#edb3d1）にトーンダウン</li>
+        <li>角丸は <b>6–8px</b> にシャープ化、一貫した8pxグリッド</li>
+        <li>パネルは<b>透明度の高いガラス</b>＋backdrop blur</li>
+        <li>ウィジェットはすべてモジュール化（yasb風に統合）</li>
+      </ul>
+      <small>※ デモ: カーソルを上端(0〜6px)へ → アクティブ。下端へ → クリーン。</small>
+    </div>
+<script>
+    // calendar: September 2026 (real DoW math)
+    const grid = document.getElementById('calgrid');
+    ['S','M','T','W','T','F','S'].forEach(d => {
+      const el = document.createElement('div');
+      el.className = 'dow';
+      el.textContent = d;
+      grid.appendChild(el);
+    });
+    const y = 2026, m = 8;
+    const firstDow = new Date(y, m, 1).getDay();
+    const daysIn = new Date(y, m + 1, 0).getDate();
+    for (let i = 0; i < 42; i++) {
+      const d = i - firstDow + 1;
+      const el = document.createElement('div');
+      el.className = 'day' + (d < 1 || d > daysIn ? ' out' : '') + (d === 5 ? ' today' : '');
+      el.textContent = d >= 1 && d <= daysIn ? d : '';
+      grid.appendChild(el);
+    }
+
+    // state switching (clean idle / active hovered)
+    const body = document.body;
+    function setState(s) {
+      body.classList.remove('clean', 'active');
+      void body.offsetWidth;
+      body.classList.add(s);
+      document.getElementById('mClean').classList.toggle('on', s === 'clean');
+      document.getElementById('mActive').classList.toggle('on', s === 'active');
+    }
+    document.getElementById('mClean').onclick = () => setState('clean');
+    document.getElementById('mActive').onclick = () => setState('active');
+    window.addEventListener('keydown', e => {
+      if (e.key === '1') { setState('clean'); }
+      if (e.key === '2') { setState('active'); }
+    });
+
+    // launcher dropdown toggle
+    const launchBtn = document.getElementById('btnLaunch');
+    launchBtn.onclick = (e) => {
+      e.stopPropagation();
+      const show = body.classList.toggle('show-launcher');
+      launchBtn.classList.toggle('on', show);
+    };
+
+    // pin button visual
+    const pinBtn = document.getElementById('btnPin');
+    pinBtn.onclick = (e) => { e.stopPropagation(); pinBtn.classList.toggle('on'); };
+
+    // hover the very top edge => active; leave far below => clean
+    let armed = null;
+    window.addEventListener('mousemove', (e) => {
+      if (e.clientY <= 6) {
+        clearTimeout(armed);
+        setState('active');
+      } else if (e.clientY > 320) {
+        clearTimeout(armed);
+        armed = setTimeout(() => setState('clean'), 420);
+      }
+    });
+    document.querySelectorAll('.stack').forEach(el => el.addEventListener('mouseenter', () => clearTimeout(armed)));
+  </script>
+</body>
+</html>

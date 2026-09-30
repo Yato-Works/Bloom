@@ -6,7 +6,6 @@
 class ThemeBridge : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString themeName READ themeName WRITE setThemeName NOTIFY themeChanged)
-    Q_PROPERTY(QString profile READ profile WRITE setProfile NOTIFY profileChanged)
 
     // Spacing & Layout
     Q_PROPERTY(int spacingXXS READ spacingXXS CONSTANT)
@@ -92,10 +91,6 @@ public:
     QString themeName() const { return m_themeName; }
     void setThemeName(const QString &name);
 
-    QString profile() const { return m_profile; }
-    void setProfile(const QString &name);
-    Q_INVOKABLE QStringList availableProfiles() const;
-
     Q_INVOKABLE void setThemeByName(const QString &name);
     Q_INVOKABLE void toggleTheme();
     Q_INVOKABLE QStringList availableThemes() const;
@@ -180,9 +175,7 @@ public:
 
 signals:
     void themeChanged();
-    void profileChanged();
 
 private:
-    QString m_profile = QStringLiteral("Bloom");
     QString m_themeName = QStringLiteral("Bloom Dark");
 };

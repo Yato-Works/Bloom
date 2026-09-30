@@ -19,6 +19,7 @@ public:
 
     Q_INVOKABLE bool setWallpaper(const QString &filePath);
     Q_INVOKABLE bool setWallpaperByIndex(int index);
+    Q_INVOKABLE bool setRandomWallpaper();
 
     Q_INVOKABLE void openFolder();
     Q_INVOKABLE void refreshWallpapers();
@@ -27,6 +28,9 @@ public:
     Q_INVOKABLE QStringList wallpaperNames() const;
     Q_INVOKABLE QStringList wallpaperPaths() const;
     Q_INVOKABLE int currentIndex() const;
+    // Absolute path of the wallpaper currently active on the desktop (may live
+    // outside the gallery list, e.g. the Windows theme cache).
+    Q_INVOKABLE QString currentWallpaperPath() const;
 
 signals:
     void currentWallpaperChanged();

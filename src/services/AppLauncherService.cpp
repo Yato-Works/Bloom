@@ -4,6 +4,7 @@
 #include <QFileInfo>
 #include <QProcess>
 #include <QDesktopServices>
+#include <QRegularExpression>
 #include <QUrl>
 #include <QStandardPaths>
 #include <QDebug>
@@ -159,15 +160,23 @@ QVariantMap AppLauncherService::evaluateMath(const QString &input)
         expr = expr.mid(1).trimmed();
     }
 
-    if (expr.isEmpty()) return res;
+    if (expr.isEmpty() || expr.size() > 128) return res;
 
     expr.replace(QStringLiteral("x"), QStringLiteral("*"), Qt::CaseInsensitive);
     expr.replace(QStringLiteral("×"), QStringLiteral("*"));
     expr.replace(QStringLiteral("÷"), QStringLiteral("/"));
     expr.replace(QStringLiteral("^"), QStringLiteral("**"));
 
-    QJSEngine jsEngine;
-    QJSValue val = jsEngine.evaluate(expr);
+    // Security: QJSEngine::evaluate() runs arbitrary JavaScript on the UI
+    // thread with no timeout, so raw launcher input like "while(true){}" would
+    // hang the shell for good. Only a strict arithmetic character set may
+    // reach the engine (digits, operators, parens, dot, exponent, spaces).
+    static const QRegularExpression arithmetic(QStringLiteral("^[0-9+\\-*/%().\\s eE]*$"));
+    if (!arithmetic.match(expr).hasMatch()) {
+        return res;
+    }
+
+    QJSValue val = m_jsEngine.evaluate(expr);
     if (!val.isError() && (val.isNumber() || val.isString())) {
         const double num = val.toNumber();
         res["valid"] = true;

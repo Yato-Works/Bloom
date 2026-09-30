@@ -1,0 +1,5 @@
+module Caelestia
+depends QtQuick
+depends Caelestia.Config
+depends Caelestia.Components
+depends Caelestia.Services

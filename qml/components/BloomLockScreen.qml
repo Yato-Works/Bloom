@@ -1,12 +1,13 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Effects
 import Bloom
 
 // ============================================================================
-//  BloomLockScreen — full-screen lock overlay (Bloom lock style)
-//  Driven by the `locked` property (bound to shellController.locked in Main.qml).
-//  Dismiss by pressing any key once, or clicking "Unlock".
+//  BloomLockScreen — full-screen passcode lock (shown by LockService after the
+//  idle timeout). Unlocks only with the configured passcode via
+//  lockService.tryUnlock().
 // ============================================================================
 Item {
     id: lockRoot
@@ -14,172 +15,198 @@ Item {
     z: 2000
     visible: opacity > 0.01
 
-    // Show/hide state (bind to shellController.locked from Main.qml)
     property bool locked: false
-    opacity: 0
+    property bool showError: false
+    property string wallSrc: ""
+    // Declarative so the overlay shows even when the service locked before
+    // QML loaded (e.g. the app started while the session was already idle).
+    opacity: locked ? 1 : 0
     Behavior on opacity { NumberAnimation { duration: 350; easing.type: Easing.OutCubic } }
     focus: lockRoot.locked
 
-    signal dashboardRequested()
+    signal unlocked()
 
     onLockedChanged: {
         if (lockRoot.locked) {
-            lockRoot.opacity = 1
-        } else {
-            lockRoot.opacity = 0
-            unlockHint.fade = false
+            passField.text = ""
+            passField.forceActiveFocus()
         }
     }
 
-    // ---- full backdrop ----
-    Rectangle {
+    function trySubmit() {
+        if (!lockRoot.locked || passField.text.length === 0)
+            return
+        if (lockService.tryUnlock(passField.text)) {
+            passField.text = ""
+            lockRoot.unlocked()
+        } else {
+            showError = true
+            errorTimer.restart()
+            shakeAnim.restart()
+            passField.text = ""
+            passField.forceActiveFocus()
+        }
+    }
+
+    Timer {
+        id: errorTimer
+        interval: 900
+        onTriggered: lockRoot.showError = false
+    }
+
+    SequentialAnimation {
+        id: shakeAnim
+        NumberAnimation { target: shakeTranslate; property: "x"; from: 0; to: -10; duration: 60; easing.type: Easing.OutCubic }
+        NumberAnimation { target: shakeTranslate; property: "x"; from: -10; to: 10; duration: 90; easing.type: Easing.InOutCubic }
+        NumberAnimation { target: shakeTranslate; property: "x"; from: 10; to: 0; duration: 70; easing.type: Easing.OutCubic }
+    }
+
+    // ---- backdrop: blurred wallpaper + deep scrim ----
+    Image {
+        id: lockWall
         anchors.fill: parent
-        color: Qt.rgba(0.03, 0.04, 0.07, 0.70)
+        source: lockRoot.wallSrc
+        fillMode: Image.PreserveAspectCrop
+        cache: false
+        visible: false
+    }
+    MultiEffect {
+        anchors.fill: lockWall
+        source: lockWall
+        visible: lockWall.status === Image.Ready
+        blurEnabled: true
+        blur: 0.85
+        blurMax: 48
+        brightness: -0.22
+        saturation: 0.8
     }
     Rectangle {
         anchors.fill: parent
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, 0.55) }
-            GradientStop { position: 0.5; color: Qt.rgba(0, 0, 0, 0.15) }
-            GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.55) }
-        }
+        color: Qt.rgba(0, 0, 0, 0.45)
     }
 
     // ---- center content ----
     Item {
+        id: rootArea
         anchors.fill: parent
 
         Column {
-            id: lockCol
-            anchors.centerIn: parent
-            spacing: 22
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            anchors.topMargin: parent.height * 0.14
+            spacing: 10
 
-            // lock icon in a glass badge
-            Rectangle {
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: 76; height: 76
-                radius: 38
-                color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.16)
-                border.width: 1
-                border.color: Qt.rgba(1, 1, 1, 0.10)
-                Text {
-                    anchors.centerIn: parent
-                    text: "🔒"
-                    font.pixelSize: 34
-                }
-            }
-
-            // big clock
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: systemInfo.formattedTime
-                color: Theme.text
-                font.pixelSize: 84
-                font.weight: Font.Light
+                color: Colours.m3onSurface
+                font.family: "Rubik"
+                font.pixelSize: 96
+                font.weight: Font.Thin
+                font.letterSpacing: 3
                 horizontalAlignment: Text.AlignHCenter
             }
-
-            // date
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: systemInfo.formattedDate
-                color: Theme.textMuted
-                font.pixelSize: Theme.fontXL
+                color: Qt.alpha(Colours.m3onSurfaceVariant, 0.85)
+                font.family: "Rubik"
+                font.pixelSize: 17
+                font.letterSpacing: 4
                 horizontalAlignment: Text.AlignHCenter
             }
-
-            // host
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: systemInfo.hostName
-                color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.55)
-                font.pixelSize: Theme.fontSM
+                color: Qt.alpha(Colours.m3onSurfaceVariant, 0.55)
+                font.family: "Rubik"
+                font.pixelSize: 12
+                font.letterSpacing: 2
                 horizontalAlignment: Text.AlignHCenter
             }
         }
 
-        // unlock hint pill (bottom center)
-        Rectangle {
+        // passcode pill
+        Column {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 56
-            width: hintRow.implicitWidth + 36
-            height: 40
-            radius: 20
-            color: Qt.rgba(1, 1, 1, 0.06)
-            border.width: 1
-            border.color: Qt.rgba(1, 1, 1, 0.10)
-            opacity: lockRoot.locked ? 0.9 : 0
-            Behavior on opacity { NumberAnimation { duration: 250 } }
+            anchors.bottomMargin: parent.height * 0.18
+            spacing: 14
 
-            RowLayout {
-                id: hintRow
-                anchors.centerIn: parent
-                spacing: 8
-                Text {
-                    text: "Click to unlock"
-                    color: Theme.text
-                    font.pixelSize: Theme.fontSM
-                    font.weight: Font.DemiBold
-                }
-                Text {
-                    text: "·"
-                    color: Theme.textMuted
-                    font.pixelSize: Theme.fontSM
-                }
-                Text {
-                    text: "Esc / Space"
-                    color: Theme.textMuted
-                    font.pixelSize: Theme.fontSM
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 10
+
+                transform: Translate { id: shakeTranslate; x: 0 }
+
+                Rectangle {
+                    width: 300
+                    height: 54
+                    radius: 27
+                    color: Qt.alpha(Colours.m3surfaceContainerHigh, 0.85)
+                    border.width: passField.activeFocus ? 1.5 : 1
+                    border.color: lockRoot.showError ? Colours.m3error
+                        : (passField.activeFocus ? Colours.m3primary : Qt.alpha(Colours.m3outlineVariant, 0.5))
+                    Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 20
+                        anchors.rightMargin: 20
+                        spacing: 10
+
+                        BloomIcon {
+                            text: "lock"
+                            color: Qt.alpha(Colours.m3onSurfaceVariant, 0.8)
+                            font.pixelSize: 17
+                        }
+
+                        TextField {
+                            id: passField
+                            Layout.fillWidth: true
+                            echoMode: TextInput.Password
+                            passwordCharacter: "●"
+                            placeholderText: "Passcode"
+                            placeholderTextColor: Qt.alpha(Colours.m3onSurfaceVariant, 0.4)
+                            color: Colours.m3onSurface
+                            font.family: "Rubik"
+                            font.pixelSize: 17
+                            font.letterSpacing: 6
+                            background: null
+                            selectByMouse: false
+                            enabled: lockRoot.locked
+                            focus: lockRoot.locked
+                            activeFocusOnTab: true
+
+                            onAccepted: lockRoot.trySubmit()
+                            Keys.onEscapePressed: event.accepted = true
+                        }
+
+                        Rectangle {
+                            width: 34; height: 34; radius: 17
+                            color: submitHover.hovered ? Qt.alpha(Colours.m3primary, 0.22) : "transparent"
+                            HoverHandler { id: submitHover; cursorShape: Qt.PointingHandCursor }
+                            TapHandler { onTapped: lockRoot.trySubmit() }
+                            BloomIcon {
+                                anchors.centerIn: parent
+                                text: "arrow_forward"
+                                color: Colours.m3primary
+                                font.pixelSize: 17
+                            }
+                        }
+                    }
                 }
             }
+
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: lockRoot.showError ? "Incorrect passcode" : "Enter passcode to unlock"
+                color: lockRoot.showError ? Colours.m3error : Qt.alpha(Colours.m3onSurfaceVariant, 0.6)
+                font.family: "Rubik"
+                font.pixelSize: 12
+                font.letterSpacing: 1
+                Behavior on color { ColorAnimation { duration: 150 } }
+            }
         }
-    }
-
-    // click anywhere to unlock
-    MouseArea {
-        anchors.fill: parent
-        onClicked: unlock()
-    }
-
-    // any key to unlock
-    Keys.onPressed: unlock()
-
-    // top-right dashboard access (above the fullscreen unlock MouseArea)
-    Rectangle {
-        anchors.top: parent.top
-        anchors.right: parent.right
-        anchors.topMargin: 24
-        anchors.rightMargin: 24
-        width: 52; height: 52
-        radius: 26
-        color: Qt.rgba(1, 1, 1, 0.06)
-        border.width: 1
-        border.color: Qt.rgba(1, 1, 1, 0.10)
-        opacity: lockRoot.locked ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: 250 } }
-        z: 10
-        Text {
-            anchors.centerIn: parent
-            text: "⌂"
-            color: Theme.text
-            font.pixelSize: 22
-        }
-        MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            onClicked: lockRoot.dashboardRequested()
-        }
-    }
-
-    function unlock() {
-        unlockHint.fade = true
-        shellController.locked = false
-        shellController.armPermanent(false)
-    }
-
-    Item {
-        id: unlockHint
-        property bool fade: false
     }
 }

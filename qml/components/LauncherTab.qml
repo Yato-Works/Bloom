@@ -22,12 +22,14 @@ Item {
 
             RowLayout { anchors.fill: parent; anchors.leftMargin: 24; anchors.rightMargin: 24; spacing: 12
                 Text { text: searchInput.text.startsWith(">") ? "⚡" : "🔍"; font.pixelSize: 20 }
-                TextInput {
+                TextField {
                     id: searchInput
                     Layout.fillWidth: true
                     placeholderText: "Search apps, type > for commands, or calculate..."
+                    placeholderTextColor: Theme.textMuted
                     color: Theme.text
                     font.pixelSize: 16
+                    background: null
                 }
             }
         }

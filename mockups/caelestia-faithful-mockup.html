@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bloom · Caelestia-faithful layout mockup</title>
+<style>
+  :root {
+    /* Caelestia Material You palette (mauve/mint on deep base) */
+    --base:        #1e1e2e;
+    --mantle:      #181825;
+    --crust:       #11111b;
+    --surface:     #313244;
+    --surface2:    #45475a;
+    --text:        #cdd6f4;
+    --subtext:     #a6adc8;
+    --mauve:       #cba6f7;
+    --blue:        #89b4fa;
+    --sky:         #89dceb;
+    --green:       #a6e3a1;
+    --peach:       #fab387;
+    --accent:      var(--mauve);
+    --radius-xl:   28px;
+    --radius-lg:   22px;
+    --radius-md:   16px;
+    --blur:        22px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Segoe UI", "Noto Sans JP", system-ui, sans-serif;
+    color: var(--text);
+    /* wallpaper stand-in: soft aurora gradient */
+    background:
+      radial-gradient(1200px 700px at 15% 10%, #45356b55, transparent 60%),
+      radial-gradient(1000px 800px at 85% 90%, #2e5c6e55, transparent 60%),
+      radial-gradient(900px 600px at 60% 30%, #3a2f5a44, transparent 55%),
+      linear-gradient(135deg, #12121c, #1a1726 55%, #10141c);
+    overflow: hidden;
+  }
+  .desktop { position: relative; width: 100vw; height: 100vh; }
+
+  /* ── LEFT VERTICAL BAR — the Caelestia signature ───────────────── */
+  .bar {
+    position: absolute; top: 14px; bottom: 14px; left: 14px;
+    width: 60px;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 14px 0; gap: 10px;
+    background: rgba(30,30,46,0.55);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    border: 1px solid rgba(203,166,247,0.14);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+  }
+  .bar .logo {
+    width: 38px; height: 38px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 20px;
+    background: linear-gradient(135deg, var(--mauve), var(--blue));
+    color: #1e1e2e; margin-bottom: 6px;
+  }
+  .bar .ws { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 auto; }
+  .bar .ws .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--surface2); transition: all .25s;
+  }
+  .bar .ws .dot.active {
+    background: var(--mauve); height: 26px; border-radius: 6px;
+    box-shadow: 0 0 12px rgba(203,166,247,0.6);
+  }
+  .bar .tray { display: flex; flex-direction: column; gap: 14px; align-items: center; }
+  .bar .tray .ic { font-size: 17px; color: var(--subtext); cursor: pointer; transition: color .2s; }
+  .bar .tray .ic:hover { color: var(--text); }
+  .bar .clock {
+    writing-mode: vertical-rl; text-orientation: mixed;
+    font-variant-numeric: tabular-nums; letter-spacing: 2px;
+    font-size: 13px; color: var(--subtext); margin: 8px 0;
+  }
+
+  /* ── MORPHING ROUND DRAWER (dashboard) ─────────────────────────── */
+  .drawer {
+    position: absolute; top: 14px; left: 90px;
+    width: 360px; padding: 22px;
+    background: rgba(24,24,37,0.62);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    border: 1px solid rgba(137,180,250,0.14);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 24px 70px rgba(0,0,0,0.5);
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .card {
+    background: rgba(49,50,68,0.5);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+  }
+  .profile { display: flex; align-items: center; gap: 14px; }
+  .profile .pfp {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--peach), var(--mauve));
+  }
+  .profile .name { font-size: 16px; font-weight: 600; }
+  .profile .sub { font-size: 12px; color: var(--subtext); }
+  .row { display: flex; gap: 12px; }
+  .row .card { flex: 1; }
+  .metric .lbl { font-size: 11px; color: var(--subtext); text-transform: uppercase; letter-spacing: 1px; }
+  .metric .val { font-size: 22px; font-weight: 700; margin-top: 4px; }
+  .ring {
+    --p: 62; width: 66px; height: 66px; border-radius: 50%;
+    background: conic-gradient(var(--sky) calc(var(--p)*1%), var(--surface) 0);
+    display: grid; place-items: center; margin: 0 auto;
+  }
+  .ring::after {
+    content: attr(data-v); width: 50px; height: 50px; border-radius: 50%;
+    background: var(--mantle); display: grid; place-items: center;
+    font-size: 13px; font-weight: 700;
+  }
+  .media { display: flex; gap: 14px; align-items: center; }
+  .media .art {
+    width: 56px; height: 56px; border-radius: var(--radius-md);
+    background: linear-gradient(135deg, var(--green), var(--sky));
+  }
+  .media .title { font-size: 14px; font-weight: 600; }
+  .media .artist { font-size: 12px; color: var(--subtext); }
+  .cava { display: flex; gap: 3px; align-items: flex-end; height: 30px; margin-top: 10px; }
+  .cava span { flex: 1; background: linear-gradient(var(--mauve), var(--blue)); border-radius: 2px; }
+
+  /* ── CENTER LAUNCHER (rounded pill) ────────────────────────────── */
+  .launcher {
+    position: absolute; top: 26px; left: 50%; transform: translateX(-6%);
+    width: 440px;
+    background: rgba(24,24,37,0.66);
+    backdrop-filter: blur(var(--blur));
+    border: 1px solid rgba(203,166,247,0.16);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 24px 70px rgba(0,0,0,0.5);
+    padding: 14px 16px;
+  }
+  .launcher .field {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(49,50,68,0.55); border-radius: 14px; padding: 10px 14px;
+  }
+  .launcher .field input {
+    flex: 1; background: transparent; border: none; outline: none;
+    color: var(--text); font-size: 15px;
+  }
+  .launcher .results { margin-top: 12px; display: flex; flex-direction: column; gap: 4px; }
+  .launcher .res {
+    display: flex; align-items: center; gap: 12px; padding: 9px 12px;
+    border-radius: 12px; cursor: pointer;
+  }
+  .launcher .res.sel { background: rgba(203,166,247,0.18); }
+  .launcher .res .ic { width: 26px; text-align: center; }
+  .launcher .res .t { font-size: 14px; }
+  .launcher .res .d { font-size: 12px; color: var(--subtext); margin-left: auto; }
+
+  .tag {
+    position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%);
+    font-size: 12px; color: var(--subtext);
+    background: rgba(17,17,27,0.6); padding: 8px 16px; border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .tag b { color: var(--mauve); }
+</style>
+</head>
+<body>
+  <div class="desktop">
+
+    <!-- LEFT VERTICAL BAR -->
+    <div class="bar">
+      <div class="logo">✦</div>
+      <div class="ws">
+        <div class="dot active"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+      <div class="clock">14:32</div>
+      <div class="tray">
+        <div class="ic">🔆</div>
+        <div class="ic">🔊</div>
+        <div class="ic">🔋</div>
+        <div class="ic">⚙️</div>
+      </div>
+    </div>
+
+    <!-- MORPHING ROUND DRAWER (dashboard) -->
+    <div class="drawer">
+      <div class="card profile">
+        <div class="pfp"></div>
+        <div>
+          <div class="name">Eli</div>
+          <div class="sub">caelestia · uptime 3h 12m</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="card metric">
+          <div class="lbl">CPU</div>
+          <div class="ring" style="--p:62" data-v="62%"></div>
+        </div>
+        <div class="card metric">
+          <div class="lbl">RAM</div>
+          <div class="ring" style="--p:48;--sky:var(--green)" data-v="48%"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="media">
+          <div class="art"></div>
+          <div>
+            <div class="title">Nightfall</div>
+            <div class="artist">Aphex Twin</div>
+          </div>
+        </div>
+        <div class="cava">
+          <span style="height:40%"></span><span style="height:70%"></span>
+          <span style="height:100%"></span><span style="height:55%"></span>
+          <span style="height:85%"></span><span style="height:35%"></span>
+          <span style="height:60%"></span><span style="height:90%"></span>
+          <span style="height:45%"></span><span style="height:75%"></span>
+          <span style="height:30%"></span><span style="height:65%"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER LAUNCHER -->
+    <div class="launcher">
+      <div class="field">
+        <span>🔍</span>
+        <input value="&gt;layout" readonly>
+      </div>
+      <div class="results">
+        <div class="res sel"><span class="ic">🧩</span><span class="t">Change Layout</span><span class="d">AX · Caelestia · Bloom</span></div>
+        <div class="res"><span class="ic">🎨</span><span class="t">Theme</span><span class="d">&gt;theme</span></div>
+        <div class="res"><span class="ic">🔒</span><span class="t">Lock</span><span class="d">&gt;lock</span></div>
+        <div class="res"><span class="ic">🖼️</span><span class="t">Wallpaper</span><span class="d">&gt;wallpaper</span></div>
+      </div>
+    </div>
+
+    <div class="tag">本家 Caelestia 風レイアウト案 — <b>左縦バー + 丸いdrawer + Material You配色</b>（モック / 実装前のたたき台）</div>
+  </div>
+</body>
+</html>

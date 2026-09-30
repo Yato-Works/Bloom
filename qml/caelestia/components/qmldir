@@ -1,0 +1,41 @@
+module Caelestia.Components
+depends QtQuick
+depends QtQuick.Controls
+AnchorAnim 1.0 AnchorAnim
+Anim 1.0 Anim
+AnimLoader 1.0 AnimLoader
+CAnim 1.0 CAnim
+Logo 1.0 Logo
+MaterialIcon 1.0 MaterialIcon
+ScreenState 1.0 ScreenState
+StateLayer 1.0 StateLayer
+StyledClippingRect 1.0 StyledClippingRect
+StyledRect 1.0 StyledRect
+StyledText 1.0 StyledText
+ButtonBase 1.0 controls/ButtonBase
+CircularIndicator 1.0 controls/CircularIndicator
+CircularProgress 1.0 controls/CircularProgress
+CustomMouseArea 1.0 controls/CustomMouseArea
+FilledSlider 1.0 controls/FilledSlider
+IconButton 1.0 controls/IconButton
+IconTextButton 1.0 controls/IconTextButton
+LoadingIndicator 1.0 controls/LoadingIndicator
+Menu 1.0 controls/Menu
+MenuItem 1.0 controls/MenuItem
+SearchBar 1.0 controls/SearchBar
+SplitButton 1.0 controls/SplitButton
+StyledProgressBar 1.0 controls/StyledProgressBar
+StyledRadioButton 1.0 controls/StyledRadioButton
+StyledScrollBar 1.0 controls/StyledScrollBar
+StyledSlider 1.0 controls/StyledSlider
+StyledSpinBox 1.0 controls/StyledSpinBox
+StyledSwitch 1.0 controls/StyledSwitch
+StyledTextField 1.0 controls/StyledTextField
+TextButton 1.0 controls/TextButton
+TextFieldBase 1.0 controls/TextFieldBase
+ColouredIcon 1.0 effects/ColouredIcon
+Colouriser 1.0 effects/Colouriser
+Elevation 1.0 effects/Elevation
+Mask 1.0 effects/Mask
+CustomShortcut 1.0 misc/CustomShortcut
+Ref 1.0 misc/Ref

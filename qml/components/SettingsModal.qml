@@ -3,8 +3,8 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Bloom
 
-// Full-screen settings modal: lets you pick one of the 3 shell design
-// profiles (AX / Caelestia / Bloom) plus a color theme within it.
+// Full-screen settings modal: pick a color theme — panel surfaces follow the
+// wallpaper palette automatically.
 Item {
     id: root
     visible: false
@@ -13,14 +13,8 @@ Item {
 
     signal closed()
 
-    property int selectedProfileIndex: 0
     property int selectedThemeIndex: 0
 
-    readonly property var profiles: [
-        { name: "AX",        icon: "🅰️", title: "AX-Shell",   desc: "トップ バー + Dock + ノッチ + 四隅コーナー。Linux (Hyprland / Fabric) の洗練されたシェルを QML で再現。", accent: "#A7F3D0", bg: "#050A10" },
-        { name: "Caelestia", icon: "🎐", title: "Caelestia",  desc: "ガラス パネル + 左右ドロワー + モーフィング。Qt6 / QML の滑らかなシェルを忠実に移植。", accent: "#CBA6F7", bg: "#0B0D14" },
-        { name: "Bloom",     icon: "🌸", title: "Bloom",      desc: "Bloom オリジナル。複数デザインを融合したカスタム シェル (現在のベース レイアウト)。", accent: "#80D8FF", bg: "#080A0E" }
-    ]
 
     readonly property var colorThemes: [
         { name: "Bloom Dark", accent: "#80D8FF" },
@@ -39,11 +33,7 @@ Item {
     function open() {
         root.visible = true
         root.forceActiveFocus()
-        selectedProfileIndex = indexForCurrent()
         selectedThemeIndex = themeIndexForCurrent()
-        profilesView.currentIndex = selectedProfileIndex
-        if (selectedProfileIndex >= 0)
-            profilesView.positionViewAtIndex(selectedProfileIndex, ListView.Center)
     }
 
     function close() {
@@ -51,25 +41,11 @@ Item {
         root.closed()
     }
 
-    function indexForCurrent() {
-        var p = (Theme.profile || "").toLowerCase()
-        for (var i = 0; i < profiles.length; i++)
-            if (profiles[i].name.toLowerCase() === p) return i
-        return 0
-    }
-
     function themeIndexForCurrent() {
         var t = (Theme.themeName || "").toLowerCase()
         for (var i = 0; i < colorThemes.length; i++)
             if (colorThemes[i].name.toLowerCase() === t) return i
         return 0
-    }
-
-    function applyProfile(index) {
-        if (index >= 0 && index < profiles.length) {
-            Theme.setProfile(profiles[index].name)
-            selectedProfileIndex = index
-        }
     }
 
     function applyTheme(index) {
@@ -126,7 +102,7 @@ Item {
                 ColumnLayout {
                     spacing: 2
                     Text { text: "Settings / 設定"; color: Theme.text; font.pixelSize: 20; font.weight: Font.Bold }
-                    Text { text: "3つのシェル デザイン (プロフィール) と配色を切り替えられます"; color: Theme.textMuted; font.pixelSize: 11 }
+                    Text { text: "2つのシェル デザイン（プロフィール）と配色を切り替えられます"; color: Theme.textMuted; font.pixelSize: 11 }
                 }
 
                 Item { Layout.fillWidth: true }
@@ -141,26 +117,6 @@ Item {
                 }
             }
 
-            // Section: Design Profile
-            Text {
-                text: "DESIGN PROFILE ── シェル デザイン"
-                color: Theme.primary
-                font.pixelSize: 10
-                font.weight: Font.Bold
-                font.letterSpacing: 1.2
-            }
-
-            ListView {
-                id: profilesView
-                Layout.fillWidth: true
-                Layout.preferredHeight: 260
-                orientation: ListView.Horizontal
-                spacing: 14
-                clip: true
-                snapMode: ListView.SnapToItem
-                model: profiles
-                delegate: profileCard
-            }
 
             // Section: Color Theme
             Text {
@@ -230,117 +186,9 @@ Item {
                 }
                 Item { Layout.fillWidth: true }
                 Text {
-                    text: "ESC = 閉じる　←→ = プロフィール選択　Enter = 適用"
+                    text: "ESC = 閉じる"
                     color: Theme.textMuted
                     font.pixelSize: 10
-                }
-            }
-        }
-    }
-
-    // Profile card delegate
-    Component {
-        id: profileCard
-        Rectangle {
-            id: cardRoot
-            width: 220
-            height: profilesView.height
-            radius: 20
-            color: cardMouse.containsMouse || index === root.selectedProfileIndex
-                   ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.14)
-                   : Qt.rgba(1, 1, 1, 0.05)
-            border.width: index === root.selectedProfileIndex ? 2 : 1
-            border.color: index === root.selectedProfileIndex ? Theme.primary : Qt.rgba(1, 1, 1, 0.12)
-
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: 16
-                spacing: 10
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 10
-
-                    Rectangle {
-                        implicitWidth: 46
-                        implicitHeight: 46
-                        radius: 14
-                        color: Qt.rgba(1, 1, 1, 0.06)
-                        border.width: 1
-                        border.color: Qt.rgba(1, 1, 1, 0.1)
-                        Text { anchors.centerIn: parent; text: profiles[index].icon; font.pixelSize: 22 }
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 1
-                        Text {
-                            text: profiles[index].title
-                            color: Theme.text
-                            font.pixelSize: 15
-                            font.weight: Font.Bold
-                        }
-                        Text {
-                            text: profiles[index].name
-                            color: Theme.textMuted
-                            font.pixelSize: 10
-                            font.family: "Monospace"
-                        }
-                    }
-                }
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 4
-                    radius: 2
-                    color: profiles[index].accent
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: profiles[index].desc
-                    color: Theme.textMuted
-                    font.pixelSize: 11
-                    lineHeight: 1.4
-                    wrapMode: Text.WordWrap
-                }
-
-                Item { Layout.fillHeight: true }
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 36
-                    radius: 18
-                    color: index === root.selectedProfileIndex
-                           ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.25)
-                           : Qt.rgba(1, 1, 1, 0.08)
-                    border.width: 1
-                    border.color: index === root.selectedProfileIndex ? Theme.primary : Qt.rgba(1, 1, 1, 0.15)
-
-                    RowLayout {
-                        anchors.centerIn: parent
-                        spacing: 5
-                        Text {
-                            text: index === root.selectedProfileIndex ? "✓" : "✦"
-                            color: index === root.selectedProfileIndex ? Theme.primary : Theme.textMuted
-                            font.pixelSize: 12
-                            font.weight: Font.Bold
-                        }
-                        Text {
-                            text: index === root.selectedProfileIndex ? "Active" : "Apply"
-                            color: index === root.selectedProfileIndex ? Theme.text : Theme.textMuted
-                            font.pixelSize: 11
-                            font.weight: Font.DemiBold
-                        }
-                    }
-                }
-
-                MouseArea {
-                    id: cardMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.applyProfile(index)
                 }
             }
         }
@@ -351,23 +199,6 @@ Item {
         if (!root.visible) return
         if (event.key === Qt.Key_Escape) {
             root.close()
-            event.accepted = true
-        } else if (event.key === Qt.Key_Left) {
-            if (selectedProfileIndex > 0) {
-                selectedProfileIndex--
-                profilesView.currentIndex = selectedProfileIndex
-                profilesView.positionViewAtIndex(selectedProfileIndex, ListView.Center)
-            }
-            event.accepted = true
-        } else if (event.key === Qt.Key_Right) {
-            if (selectedProfileIndex < profiles.length - 1) {
-                selectedProfileIndex++
-                profilesView.currentIndex = selectedProfileIndex
-                profilesView.positionViewAtIndex(selectedProfileIndex, ListView.Center)
-            }
-            event.accepted = true
-        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-            root.applyProfile(selectedProfileIndex)
             event.accepted = true
         }
     }

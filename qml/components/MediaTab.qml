@@ -1,125 +1,269 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import Bloom
 
-RowLayout {
-    spacing: 24
-    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-    Layout.fillWidth: true
+Item {
+    id: root
 
-    Rectangle {
-        implicitWidth: 72
-        implicitHeight: 72
-        radius: 20
-        color: Qt.rgba(0.05, 0.06, 0.1, 0.7)
-        border.width: 1.5
-        border.color: (musicControl && musicControl.isPlaying) ? Theme.accent : Qt.rgba(1, 1, 1, 0.12)
+    // State
+    property bool expanded: false
+    property bool isDashboardOpen: false
+    readonly property bool isPlaying: musicControl && musicControl.isPlaying
+    readonly property bool hasTrack: musicControl && musicControl.trackTitle && musicControl.trackTitle.length > 0
 
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: -4
-            radius: 24
-            color: Theme.accent
-            opacity: (musicControl && musicControl.isPlaying) ? 0.25 : 0.0
-            z: -1
-            Behavior on opacity { NumberAnimation { duration: 300 } }
-        }
+    // Deterministic color for track (fallback when no art)
+    readonly property int trackHash: {
+        const title = musicControl ? musicControl.trackTitle : ""
+        let h = 0
+        for (let i = 0; i < title.length; i++) h = (h * 31 + title.charCodeAt(i)) | 0
+        return Math.abs(h)
+    }
+    readonly property color artColor1: Qt.hsla((root.trackHash % 360) / 360, 0.7, 0.55, 1)
+    readonly property color artColor2: Qt.hsla(((root.trackHash * 7 + 120) % 360) / 360, 0.6, 0.45, 1)
 
-        Item {
-            anchors.centerIn: parent
-            width: 44
-            height: 44
-
-            Rectangle {
-                anchors.fill: parent
-                radius: 22
-                color: "#11111b"
-                border.width: 1
-                border.color: Qt.rgba(1, 1, 1, 0.2)
-
-                Rectangle {
-                    anchors.centerIn: parent
-                    width: 16
-                    height: 16
-                    radius: 8
-                    color: Theme.accent
-                }
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "\u{1F3B5}"
-                    font.pixelSize: 16
-                }
-
-                RotationAnimation on rotation {
-                    running: (musicControl && musicControl.isPlaying) ? true : false
-                    from: 0
-                    to: 360
-                    duration: 6000
-                    loops: Animation.Infinite
-                }
-            }
-        }
+    // Animations
+    NumberAnimation on rotation {
+        running: root.isPlaying
+        from: 0; to: 360
+        duration: 20000
+        loops: Animation.Infinite
+        easing.type: Easing.Linear
     }
 
-    ColumnLayout {
-        Layout.fillWidth: true
-        spacing: 8
+    Behavior on expanded { NumberAnimation { duration: 200; easing.type: Easing.OutExpo } }
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 12
+    // Main layout switches between compact and expanded
+    RowLayout {
+        id: mainRow
+        anchors.fill: parent
+        anchors.leftMargin: expanded ? 8 : 6
+        anchors.rightMargin: expanded ? 8 : 6
+        anchors.topMargin: expanded ? 8 : 0
+        anchors.bottomMargin: expanded ? 8 : 0
+        spacing: expanded ? 16 : 8
 
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 2
+        // ── LEFT: Album Art / Pulse Icon ──
+        Rectangle {
+            id: albumArt
+
+            Layout.preferredWidth: expanded ? 160 : 40
+            Layout.preferredHeight: expanded ? 160 : 40
+            Layout.maximumWidth: expanded ? 160 : 40
+            Layout.maximumHeight: expanded ? 160 : 40
+            radius: expanded ? 20 : 20
+
+            // Album art gradient
+            gradient: Gradient {
+                GradientStop { position: 0; color: root.artColor1 }
+                GradientStop { position: 1; color: root.artColor2 }
+            }
+            Behavior on radius { NumberAnimation { duration: 200 } }
+
+            Rectangle {
+                anchors.centerIn: parent
+                width: parent.width * (root.isPlaying ? 0.85 : 0.6)
+                height: parent.height * (root.isPlaying ? 0.85 : 0.6)
+                radius: width / 2
+                color: Qt.rgba(0, 0, 0, 0.35)
 
                 Text {
-                    text: (musicControl && musicControl.trackTitle) ? musicControl.trackTitle : "No media playing"
-                    color: "#ffffff"
-                    font.pixelSize: 15
-                    font.weight: Font.Bold
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
-                Text {
-                    text: (musicControl && musicControl.artistName && musicControl.artistName !== "")
-                        ? musicControl.artistName
-                        : (musicControl && musicControl.sourceApp ? musicControl.sourceApp : "Bloom Media Player")
-                    color: Qt.rgba(1, 1, 1, 0.6)
-                    font.pixelSize: 11
+                    anchors.centerIn: parent
+                    text: "🎵"
+                    font.pixelSize: parent.width * 0.35
+                    opacity: 0.9
                 }
             }
 
+            RotationAnimation on rotation {
+                running: root.isPlaying
+                from: 0; to: 360
+                duration: 25000
+                loops: Animation.Infinite
+                easing.type: Easing.Linear
+            }
+        }
+
+        // ── CENTER: Track Info + Progress ──
+        ColumnLayout {
+            id: centerColumn
+            Layout.fillWidth: true
+            spacing: expanded ? 6 : 2
+
+            Text {
+                id: titleText
+                Layout.fillWidth: true
+                text: root.hasTrack ? musicControl.trackTitle : qsTr("No media")
+                color: Theme.text
+                font.pixelSize: expanded ? 16 : 13
+                font.weight: Font.Bold
+                elide: Text.ElideRight
+                maximumLineCount: expanded ? 2 : 1
+            }
+
+            Text {
+                id: artistText
+                Layout.fillWidth: true
+                text: {
+                    if (musicControl && musicControl.artistName && musicControl.artistName !== "")
+                        return musicControl.artistName
+                    if (musicControl && musicControl.sourceApp)
+                        return musicControl.sourceApp
+                    return qsTr("Bloom Media Player")
+                }
+                color: Qt.rgba(1, 1, 1, 0.6)
+                font.pixelSize: expanded ? 13 : 11
+                elide: Text.ElideRight
+                visible: root.hasTrack
+            }
+
+            // Progress bar
+            Item {
+                id: progressRow
+                Layout.fillWidth: true
+                visible: root.hasTrack
+                height: expanded ? 20 : 14
+
+                // Background track
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.topMargin: expanded ? 7 : 4
+                    height: expanded ? 4 : 3
+                    radius: height / 2
+                    color: Qt.rgba(1, 1, 1, 0.1)
+
+                    Behavior on height { NumberAnimation { duration: 120 } }
+                }
+
+                // Filled progress
+                Rectangle {
+                    anchors.top: parent.top
+                    anchors.topMargin: expanded ? 7 : 4
+                    height: expanded ? 4 : 3
+                    radius: height / 2
+                    color: Theme.accent
+                    width: {
+                        if (!musicControl || !musicControl.duration) return 0
+                        return parent.width * (musicControl.position / musicControl.duration)
+                    }
+
+                    Behavior on width { NumberAnimation { duration: 150 } }
+
+                    // Thumb
+                    Rectangle {
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: expanded ? 10 : 8
+                        height: width
+                        radius: width / 2
+                        color: "#ffffff"
+                        opacity: root.isPlaying ? 0.9 : 0.5
+                        visible: expanded
+
+                        Behavior on opacity { NumberAnimation { duration: 150 } }
+                    }
+                }
+
+                // Seek handle
+                Rectangle {
+                    id: seekHandle
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: 0
+                    height: expanded ? 16 : 12
+                    radius: 8
+                    color: "transparent"
+
+                    Behavior on width { NumberAnimation { duration: 120 } }
+                    Behavior on x { NumberAnimation { duration: 120 } }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onPressed: {
+                        if (!musicControl || !musicControl.duration) return
+                        const ratio = mouse.x / width
+                        // For demo, just advance position
+                        musicControl.position = Math.round(ratio * musicControl.duration)
+                    }
+                }
+            }
+
+            // Time labels (expanded only)
+            RowLayout {
+                id: timeRow
+                visible: expanded
+                Layout.fillWidth: true
+                spacing: 6
+
+                Text {
+                    text: {
+                        if (!musicControl || musicControl.position <= 0) return "0:00"
+                        const m = Math.floor(musicControl.position / 60)
+                        const s = musicControl.position % 60
+                        return m + ":" + (s < 10 ? "0" : "") + s
+                    }
+                    color: Qt.rgba(1, 1, 1, 0.5)
+                    font.pixelSize: 10
+                    font.weight: Font.DemiBold
+                }
+
+                Item { Layout.fillWidth: true }
+
+                Text {
+                    text: {
+                        if (!musicControl || musicControl.duration <= 0) return "0:00"
+                        const m = Math.floor(musicControl.duration / 60)
+                        const s = musicControl.duration % 60
+                        return m + ":" + (s < 10 ? "0" : "") + s
+                    }
+                    color: Qt.rgba(1, 1, 1, 0.5)
+                    font.pixelSize: 10
+                    font.weight: Font.DemiBold
+                }
+            }
+        }
+
+        // ── RIGHT: Controls + Mini CAVA ──
+        RowLayout {
+            id: controlsRow
+            spacing: 4
+            visible: !expanded
+
             Rectangle {
-                implicitWidth: cavaRow.implicitWidth + 16
-                implicitHeight: 38
-                radius: 12
-                color: Qt.rgba(0.04, 0.05, 0.09, 0.6)
+                id: miniCava
+
+                implicitWidth: cavaRow.implicitWidth + 10
+                implicitHeight: 28
+                radius: 10
+                color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.15)
                 border.width: 1
                 border.color: Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.3)
 
                 Row {
                     id: cavaRow
                     anchors.centerIn: parent
-                    spacing: 3.5
-                    height: 28
+                    spacing: 2.5
+                    height: 20
 
                     Repeater {
-                        model: 20
+                        model: 6
 
                         Rectangle {
-                            width: 3.5
+                            width: 2.5
                             height: {
-                                if (cavaService && cavaService.bars && cavaService.bars.length > index) {
-                                    var val = cavaService.bars[index]
-                                    return Math.max(4, val * 28)
+                                if (cavaService && cavaService.bars && cavaService.bars.length > index * 3) {
+                                    return Math.max(3, cavaService.bars[index * 3] * 18)
                                 }
-                                return 4
+                                return 3
                             }
-                            radius: 1.8
+                            radius: 1.2
                             anchors.bottom: parent.bottom
-                            color: Qt.hsva(0.56 + (index * 0.018), 0.75, 0.95, 0.95)
+                            color: Theme.accent
+                            opacity: 0.8
+
                             Behavior on height { NumberAnimation { duration: 60; easing.type: Easing.OutCubic } }
                         }
                     }
@@ -128,142 +272,87 @@ RowLayout {
         }
 
         RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
+            id: expandedControls
+            visible: expanded
+            spacing: 6
+            Layout.alignment: Qt.AlignHCenter
 
-            Text {
-                text: {
-                    if (musicControl && musicControl.position > 0) {
-                        var m = Math.floor(musicControl.position / 60)
-                        var s = musicControl.position % 60
-                        return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s
-                    }
-                    return "00:00"
+            Rectangle {
+                implicitWidth: 36
+                implicitHeight: 36
+                radius: 18
+                color: prevMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.18) : Qt.rgba(1, 1, 1, 0.07)
+                border.width: 1
+                border.color: prevMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.28) : "transparent"
+
+                Text { anchors.centerIn: parent; text: "⏮"; color: "#ffffff"; font.pixelSize: 13 }
+                MouseArea {
+                    id: prevMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: musicControl.previous()
                 }
-                color: Qt.rgba(1, 1, 1, 0.5)
-                font.pixelSize: 10
-                font.weight: Font.DemiBold
             }
 
             Rectangle {
-                id: progressTrack
-                Layout.fillWidth: true
-                height: progressMouse.containsMouse ? 6 : 4
-                radius: height / 2
-                color: Qt.rgba(1, 1, 1, 0.12)
-
-                Behavior on height { NumberAnimation { duration: 120 } }
+                implicitWidth: 52
+                implicitHeight: 52
+                radius: 26
+                color: playMouse.containsMouse ? Theme.accent : Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.9)
 
                 Rectangle {
-                    width: parent.width * (musicControl && musicControl.duration > 0 ? (musicControl.position / musicControl.duration) : 0)
-                    height: parent.height
-                    radius: parent.radius
+                    anchors.fill: parent
+                    anchors.margins: -4
+                    radius: 30
                     color: Theme.accent
+                    opacity: playMouse.containsMouse ? 0.35 : 0.15
+                    z: -1
+                    Behavior on opacity { NumberAnimation { duration: 150 } }
+                }
 
-                    Behavior on width { NumberAnimation { duration: 200 } }
-
-                    Rectangle {
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: progressMouse.containsMouse ? 12 : 0
-                        height: width
-                        radius: width / 2
-                        color: "#ffffff"
-                        Behavior on width { NumberAnimation { duration: 120 } }
-                    }
+                Text {
+                    anchors.centerIn: parent
+                    text: root.isPlaying ? "⏸" : "▶"
+                    color: "#11111b"
+                    font.pixelSize: 20
+                    font.weight: Font.Bold
                 }
 
                 MouseArea {
-                    id: progressMouse
+                    id: playMouse
                     anchors.fill: parent
                     hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
+                    onClicked: musicControl.playPause()
                 }
             }
 
-            Text {
-                text: {
-                    if (musicControl && musicControl.duration > 0) {
-                        var m = Math.floor(musicControl.duration / 60)
-                        var s = musicControl.duration % 60
-                        return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s
-                    }
-                    return "00:00"
+            Rectangle {
+                implicitWidth: 36
+                implicitHeight: 36
+                radius: 18
+                color: nextMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.18) : Qt.rgba(1, 1, 1, 0.07)
+                border.width: 1
+                border.color: nextMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.28) : "transparent"
+
+                Text { anchors.centerIn: parent; text: "⏭"; color: "#ffffff"; font.pixelSize: 13 }
+                MouseArea {
+                    id: nextMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: musicControl.next()
                 }
-                color: Qt.rgba(1, 1, 1, 0.5)
-                font.pixelSize: 10
-                font.weight: Font.DemiBold
             }
         }
     }
 
-    RowLayout {
-        spacing: 8
-
-        Rectangle {
-            width: 34
-            height: 34
-            radius: 17
-            color: prevBtnMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06)
-            border.width: 1
-            border.color: prevBtnMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.25) : "transparent"
-
-            Text { anchors.centerIn: parent; text: "\u23EE"; color: "#ffffff"; font.pixelSize: 12 }
-            MouseArea {
-                id: prevBtnMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                onClicked: musicControl.previous()
-            }
-        }
-
-        Rectangle {
-            width: 44
-            height: 44
-            radius: 22
-            color: playBtnMouse.containsMouse ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.9) : Theme.accent
-
-            Rectangle {
-                anchors.fill: parent
-                anchors.margins: -3
-                radius: 25
-                color: Theme.accent
-                opacity: playBtnMouse.containsMouse ? 0.4 : 0.15
-                z: -1
-                Behavior on opacity { NumberAnimation { duration: 150 } }
-            }
-
-            Text {
-                anchors.centerIn: parent
-                text: (musicControl && musicControl.isPlaying) ? "\u23F8" : "\u25B6"
-                color: "#11111b"
-                font.pixelSize: 15
-                font.weight: Font.Bold
-            }
-
-            MouseArea {
-                id: playBtnMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                onClicked: musicControl.playPause()
-            }
-        }
-
-        Rectangle {
-            width: 34
-            height: 34
-            radius: 17
-            color: nextBtnMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.06)
-            border.width: 1
-            border.color: nextBtnMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.25) : "transparent"
-
-            Text { anchors.centerIn: parent; text: "\u23ED"; color: "#ffffff"; font.pixelSize: 12 }
-            MouseArea {
-                id: nextBtnMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                onClicked: musicControl.next()
-            }
-        }
+    // Expanded glow
+    Rectangle {
+        anchors.fill: albumArt
+        radius: albumArt.radius + 4
+        color: "transparent"
+        border.width: expanded ? 2 : 0
+        border.color: Qt.rgba(root.artColor1.r, root.artColor1.g, root.artColor1.b, 0.3)
+        visible: expanded
+        Behavior on border.width { NumberAnimation { duration: 200 } }
     }
 }

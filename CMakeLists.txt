@@ -32,25 +32,29 @@ qt_add_executable(Bloom
     src/services/AIService.cpp
     src/services/NotionService.cpp
     src/services/AppLauncherService.cpp
+    src/services/CaelestiaColours.cpp
+    src/services/CaelestiaTokens.cpp
+    src/services/CaelestiaConfig.cpp
+    src/services/PaletteEngine.cpp
     src/services/CavaService.cpp
+    src/services/LockService.cpp
     src/services/GlobalHotkeyService.cpp
 )
 
 qt_add_qml_module(Bloom
     URI Bloom
     VERSION 1.0
+    RESOURCES
+        assets/dino.png
+        assets/bongocat.gif
     QML_FILES
         qml/Main.qml
         qml/components/GlassPanel.qml
         qml/components/SidebarItem.qml
         qml/components/WallpaperSelector.qml
-        qml/components/TopShellPanel.qml
-        qml/components/BottomShellPanel.qml
         qml/components/MetricRing.qml
         qml/components/ForecastItem.qml
         qml/components/MaterialIcon.qml
-        qml/components/LeftDrawer.qml
-        qml/components/RightDrawer.qml
         qml/components/SmartLauncherModal.qml
         qml/components/BloomCalculatorModal.qml
         qml/components/BloomDashboardModal.qml
@@ -61,7 +65,6 @@ qt_add_qml_module(Bloom
         qml/components/SystemHealthTab.qml
         qml/components/ThemePopover.qml
         qml/components/SettingsModal.qml
-        qml/components/VerticalSidebar.qml
         qml/components/DashboardCard.qml
         qml/components/ControlStack.qml
         qml/components/QuickSettingIcon.qml
@@ -89,13 +92,37 @@ qt_add_qml_module(Bloom
         qml/components/RecorderBtn.qml
         qml/components/QuickToggleBtn.qml
         qml/components/SwitchButton.qml
+        qml/caelestia/CaelestiaShell.qml
+        qml/caelestia/CaelestiaLeftDock.qml
+        qml/caelestia/CaelestiaRightDrawer.qml
+        qml/caelestia/VerticalSlider.qml
+        qml/caelestia/CircularProgress.qml
+        qml/caelestia/DashTab.qml
+        qml/caelestia/CaelestiaMediaTab.qml
+        qml/caelestia/PerfTab.qml
+        qml/caelestia/WeatherDetailTab.qml
+        qml/caelestia/BloomShellStyle.qml
+        qml/caelestia/BloomSparkline.qml
+        qml/caelestia/BloomMonthGrid.qml
+        qml/caelestia/BloomTopBar.qml
+        qml/caelestia/BloomAppLauncher.qml
+        qml/caelestia/BloomControlPanel.qml
+        qml/caelestia/BloomAnim.qml
+        qml/caelestia/BloomIcon.qml
+        qml/caelestia/BloomDashPanel.qml
+        qml/caelestia/CaelestiaBottomLauncher.qml
 )
 
-target_include_directories(Bloom PRIVATE src)
+target_include_directories(Bloom PRIVATE src src/services)
 target_link_libraries(Bloom PRIVATE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::QuickControls2 Qt6::QuickLayouts Qt6::QuickDialogs2 Qt6::Network)
 
 if (WIN32)
-    target_link_libraries(Bloom PRIVATE user32 ole32)
+    target_link_libraries(Bloom PRIVATE user32 ole32 dxva2 gdi32)
+    # 実行時に相対参照される assets (dino.png / bongocat.gif 等) をビルド-dirへ配置
+    add_custom_command(TARGET Bloom POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                ${CMAKE_CURRENT_SOURCE_DIR}/assets $<TARGET_FILE_DIR:Bloom>/assets
+    )
     # windeployqtを環境非依存で検索
     find_program(WINDEPLOYQT_EXECUTABLE
         NAMES windeployqt
@@ -110,4 +137,4 @@ if (WIN32)
     endif()
 endif()
 
-set_target_properties(Bloom PROPERTIES WIN32_EXECUTABLE TRUE)
+set_target_properties(Bloom PROPERTIES WIN32_EXECUTABLE FALSE)

@@ -151,12 +151,14 @@ Item {
                     anchors.leftMargin: 16
                     anchors.rightMargin: 16
                     Text { text: "🔍"; font.pixelSize: 14; color: Theme.textMuted }
-                    TextInput {
+                    TextField {
                         id: filterInput
                         Layout.fillWidth: true
                         placeholderText: "Filter themes..."
+                        placeholderTextColor: Theme.textMuted
                         color: Theme.text
                         font.pixelSize: 13
+                        background: null
                     }
                 }
             }

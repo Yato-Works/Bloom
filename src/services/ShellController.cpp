@@ -16,9 +16,9 @@ ShellController::ShellController(QObject *parent)
     m_pollTimer.setInterval(20);
     connect(&m_pollTimer, &QTimer::timeout, this, &ShellController::poll);
 
-    // Leave grace timer: 120ms after cursor leaves extended hit rect
+    // Leave grace timer: 350ms after cursor leaves extended hit rect
     m_leaveGraceTimer.setSingleShot(true);
-    m_leaveGraceTimer.setInterval(120);
+    m_leaveGraceTimer.setInterval(350);
     connect(&m_leaveGraceTimer, &QTimer::timeout, this, &ShellController::tryUnlatch);
 
     m_statusText = QStringLiteral("Hold %1 · edge to open widgets").arg(holdHint());
@@ -33,7 +33,6 @@ qreal ShellController::dimOpacity() const noexcept
     if (m_armed) return 0.12;         // Armed only (dim, no panel)
     return 0.0;                       // Idle
 }
-
 QString ShellController::holdHint() const
 {
     return QStringLiteral("Ctrl + Win");
@@ -104,6 +103,21 @@ void ShellController::armPermanent(bool armed)
     setForceArmed(armed);
 }
 
+void ShellController::setLockScreenActive(bool active)
+{
+    if (m_lockScreenActive == active) {
+        return;
+    }
+    m_lockScreenActive = active;
+    if (active) {
+        // Force the host window up so the lock overlay has a surface. The
+        // lock overlay itself sits above everything in QML; the shell's own
+        // latch state is left untouched.
+        setForceArmed(true);
+        setArmed(true);
+    }
+}
+
 void ShellController::disarm()
 {
     setForceArmed(false);
@@ -121,6 +135,12 @@ void ShellController::dismiss()
         m_leaveGraceTimer.stop();
         emit armedChanged();
     }
+}
+
+void ShellController::triggerLauncher()
+{
+    armPermanent(true);
+    emit requestShowLauncher();
 }
 
 void ShellController::toggleLock()
@@ -391,8 +411,38 @@ void ShellController::poll()
     }
     m_chordWasDown = chord;
 
-    // Determine armed state
-    // Armed if: forceArmed (programmatic), locked, latched, OR chord currently held
+    // Global bottom-edge cursor auto-summon:
+    // When the user moves the cursor to the bottom edge of the screen, auto-summon the launcher.
+#ifdef Q_OS_WIN
+    POINT pt;
+    if (GetCursorPos(&pt)) {
+        QScreen *screen = QGuiApplication::screenAt(QPoint(pt.x, pt.y));
+        if (!screen) screen = QGuiApplication::primaryScreen();
+        if (screen) {
+            const QRect geom = screen->geometry();
+            // Trigger when cursor hits within 4px of the screen bottom, avoiding corners
+            const bool atBottomEdge = (pt.y >= geom.bottom() - 4)
+                                   && (pt.x >= geom.left() + 40)
+                                   && (pt.x <= geom.right() - 40);
+
+            if (atBottomEdge) {
+                m_bottomHoverTicks++;
+                if (m_bottomHoverTicks >= 3) { // ~60ms of resting at bottom edge
+                    if (!m_armed || !m_forceArmed) {
+                        armPermanent(true);
+                        emit requestShowLauncher();
+                    }
+                    m_bottomHoverTicks = 0;
+                }
+            } else {
+                m_bottomHoverTicks = 0;
+            }
+        }
+    }
+#endif
+
+    // Determine armed state: programmatic arm (launcher / lock screen / panel
+    // pin), the overlay lock, a latched panel, or the Ctrl+Win chord.
     const bool shouldBeArmed = m_forceArmed || m_locked || m_latched || chord;
     setArmed(shouldBeArmed);
 }

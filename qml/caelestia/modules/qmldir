@@ -1,0 +1,25 @@
+module Caelestia.modules
+depends QtQuick
+depends Caelestia.Components
+depends Caelestia.Config
+depends Caelestia.Services
+depends Bloom.Services
+
+# Background
+Background 1.0 background/Background
+DesktopClock 1.0 background/DesktopClock
+Visualiser 1.0 background/Visualiser
+Wallpaper 1.0 background/Wallpaper
+
+# Bar
+Bar 1.0 bar/Bar
+BarWrapper 1.0 bar/BarWrapper
+
+# Dashboard
+Dash 1.0 dashboard/Dash
+Media 1.0 dashboard/Media
+MediaSection 1.0 dashboard/media/BackgroundShapes
+CoverVisualiser 1.0 dashboard/media/CoverVisualiser
+MediaDetails 1.0 dashboard/media/Details
+LyricsContainer 1.0 dashboard/media/LyricList
+LyricsSelector 1.0 dashboard/media/LyricsAndSelector

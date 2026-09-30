@@ -3,7 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Bloom
 
-Item {
+Rectangle {
     property bool checked: false
     property var onToggled: () => {}
 

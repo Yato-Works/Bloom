@@ -8,6 +8,7 @@
 #include <QStandardPaths>
 #include <QDesktopServices>
 #include <QUrl>
+#include <QRandomGenerator>
 
 #ifdef Q_OS_WIN
 #  include <qt_windows.h>
@@ -20,6 +21,32 @@ QStringList defaultGalleryPaths()
     QStringList paths;
 
 #ifdef Q_OS_WIN
+    const QString home = QDir::homePath();
+    const QString pictures = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
+    const QString docs = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    const QString appDir = QGuiApplication::applicationDirPath();
+
+    const QStringList extraDirs = {
+        pictures + QStringLiteral("/Bloom-Wallpapers"),
+        pictures + QStringLiteral("/Bloom Wallpapers"),
+        docs + QStringLiteral("/Bloom-Wallpapers"),
+        docs + QStringLiteral("/Bloom Wallpapers"),
+        home + QStringLiteral("/OneDrive/ドキュメント/Bloom-Wallpapers"),
+        home + QStringLiteral("/OneDrive/Documents/Bloom-Wallpapers"),
+        home + QStringLiteral("/OneDrive/ドキュメント/Bloom Wallpapers"),
+        home + QStringLiteral("/OneDrive/Documents/Bloom Wallpapers"),
+        home + QStringLiteral("/Pictures/Bloom-Wallpapers"),
+        home + QStringLiteral("/Documents/Bloom-Wallpapers"),
+        home + QStringLiteral("/Bloom-Wallpapers"),
+        appDir + QStringLiteral("/wallpapers"),
+        appDir + QStringLiteral("/assets/wallpapers")
+    };
+    for (const QString &p : extraDirs) {
+        if (QDir(p).exists()) {
+            paths << p;
+        }
+    }
+
     const QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/Bloom/wallpapers");
     QDir().mkpath(appData);
     paths << appData;
@@ -32,6 +59,7 @@ QStringList defaultGalleryPaths()
     }
 #endif
 
+    paths.removeDuplicates();
     return paths;
 }
 
@@ -51,8 +79,7 @@ void WallpaperService::refreshWallpapers()
 {
     m_names.clear();
     m_paths.clear();
-
-    loadDefaultWallpapers();
+    m_wallpapers.clear();
 
     const QStringList roots = defaultGalleryPaths();
     for (const QString &root : roots) {
@@ -65,6 +92,8 @@ void WallpaperService::refreshWallpapers()
             const QString fullPath = dir.filePath(file);
             const QString name = QFileInfo(file).completeBaseName();
 
+            if (m_paths.contains(fullPath)) continue;
+
             m_names << name;
             m_paths << fullPath;
 
@@ -74,12 +103,24 @@ void WallpaperService::refreshWallpapers()
             w["colorStart"] = QStringLiteral("#1e2233");
             w["colorEnd"] = QStringLiteral("#0b0d14");
             w["path"] = QUrl::fromLocalFile(fullPath).toString();
+            w["localPath"] = fullPath;
             m_wallpapers.append(w);
         }
     }
 
+    if (m_wallpapers.isEmpty()) {
+        loadDefaultWallpapers();
+    }
+
     emit wallpapersChanged();
     refreshCurrent();
+}
+
+bool WallpaperService::setRandomWallpaper()
+{
+    if (m_wallpapers.isEmpty()) return false;
+    const int idx = QRandomGenerator::global()->bounded(m_wallpapers.size());
+    return setWallpaperByIndex(idx);
 }
 
 void WallpaperService::openFolder()
@@ -100,31 +141,57 @@ QString WallpaperService::galleryFolderPath() const
 
 void WallpaperService::loadDefaultWallpapers()
 {
-    struct DefaultWallpaper {
-        QString name;
-        QString fileName;
-        QString colorStart;
-        QString colorEnd;
-    };
-
-    const QList<DefaultWallpaper> defaults = {
-        {"Deadly", "Deadly.png", "#1a1a1a", "#0d0d0d"},
-        {"Edogawa Ranpo", "Edogawa_Ranpo.jpg", "#2c1f1d", "#4a3532"},
-        {"Fall", "Fall.jpeg", "#0f0f14", "#1f1f2e"},
-        {"Evangelion", "Evangelion.png", "#8a0f0f", "#3a0000"},
-        {"Frieren", "Frieren.jpeg", "#3a4a5a", "#1e2936"}
-    };
-
+    // Scan Windows system wallpapers as a fallback when no user wallpapers are found
     m_wallpapers.clear();
-    for (const auto &item : defaults) {
-        QVariantMap w;
-        w["name"] = item.name;
-        w["fileName"] = item.fileName;
-        w["colorStart"] = item.colorStart;
-        w["colorEnd"] = item.colorEnd;
-        w["path"] = "";
-        m_wallpapers.append(w);
+    m_names.clear();
+    m_paths.clear();
+
+#ifdef Q_OS_WIN
+    const QStringList systemDirs = {
+        QStringLiteral("C:/Windows/Web/Wallpaper"),
+        QStringLiteral("C:/Windows/Web/Screen"),
+        QStringLiteral("C:/Windows/Web/4K/Wallpaper")
+    };
+
+    for (const QString &sysDir : systemDirs) {
+        QDir dir(sysDir);
+        if (!dir.exists()) continue;
+
+        // Recurse into subdirectories
+        const auto entries = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
+        QList<QDir> searchDirs;
+        searchDirs.append(dir);
+        for (const auto &entry : entries) {
+            searchDirs.append(QDir(entry.filePath()));
+        }
+
+        for (const QDir &d : searchDirs) {
+            const QStringList files = d.entryList(imageFilters(), QDir::Files, QDir::Name);
+            for (const QString &file : files) {
+                const QString fullPath = d.filePath(file);
+                const QString name = QFileInfo(file).completeBaseName();
+
+                if (m_paths.contains(fullPath)) continue;
+
+                // Skip tiny thumbnails (< 50KB)
+                if (QFileInfo(fullPath).size() < 50000) continue;
+
+                m_names << name;
+                m_paths << fullPath;
+
+                QVariantMap w;
+                w["name"] = name;
+                w["fileName"] = file;
+                w["colorStart"] = QStringLiteral("#1e2233");
+                w["colorEnd"] = QStringLiteral("#0b0d14");
+                w["path"] = QUrl::fromLocalFile(fullPath).toString();
+                w["localPath"] = fullPath;
+                m_wallpapers.append(w);
+            }
+        }
     }
+#endif
+
     emit wallpapersChanged();
 }
 
@@ -211,4 +278,19 @@ void WallpaperService::refreshCurrent()
         }
     }
 #endif
+}
+
+QString WallpaperService::currentWallpaperPath() const
+{
+#ifdef Q_OS_WIN
+    WCHAR path[MAX_PATH] = {0};
+    if (SystemParametersInfoW(SPI_GETDESKWALLPAPER, std::size(path), path, 0)) {
+        const QString current = QString::fromWCharArray(path);
+        if (!current.isEmpty())
+            return current;
+    }
+#endif
+    if (m_currentIndex >= 0 && m_currentIndex < m_paths.size())
+        return m_paths.at(m_currentIndex);
+    return m_paths.value(0);
 }

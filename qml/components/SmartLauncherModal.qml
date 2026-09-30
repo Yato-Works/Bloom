@@ -11,6 +11,8 @@ Item {
 
     signal closed()
     signal openCalculatorRequested()
+    signal openThemeRequested()
+    signal openWallpaperRequested()
 
     property var appList: []
     property var cliList: []
@@ -37,22 +39,24 @@ Item {
         selectedIndex = 0
 
         // 1. Math evaluation test
-        mathResult = appLauncherService.evaluateMath(query)
+        if (typeof appLauncherService !== "undefined" && appLauncherService) {
+            mathResult = appLauncherService.evaluateMath(query)
 
-        // 2. CLI commands test (if starts with '>')
-        if (query.startsWith(">")) {
-            cliList = appLauncherService.searchCliCommands(query)
-            appList = []
-        } else {
-            cliList = []
-            appList = appLauncherService.searchApps(query)
+            // 2. CLI commands test (if starts with '>')
+            if (query.startsWith(">")) {
+                cliList = appLauncherService.searchCliCommands(query)
+                appList = []
+            } else {
+                cliList = []
+                appList = appLauncherService.searchApps(query)
+            }
         }
     }
 
     function executeSelected() {
         var query = searchInput.text.trim().toLowerCase()
 
-        if (mathResult.valid) {
+        if (mathResult && mathResult.valid) {
             launcherRoot.openCalculatorRequested()
             launcherRoot.close()
             return
@@ -78,7 +82,7 @@ Item {
             if (app.exec === "bloom-calculator" || app.name.toLowerCase().indexOf("calc") !== -1) {
                 launcherRoot.openCalculatorRequested()
             } else {
-                appLauncherService.launchApp(app.exec)
+                if (typeof appLauncherService !== "undefined" && appLauncherService) appLauncherService.launchApp(app.exec)
             }
             launcherRoot.close()
         }
@@ -88,17 +92,18 @@ Item {
         var c = cmdName.toLowerCase()
         if (c === ">calculator" || c === ">calc" || c === ">c") {
             launcherRoot.openCalculatorRequested()
-        } else if (c === ">theme" || c === ">settings") {
-            // Open the settings modal (profiles + color themes) via appLauncherService
-            appLauncherService.requestSettings()
+        } else if (c === ">theme") {
+            launcherRoot.openThemeRequested()
+        } else if (c === ">wallpaper") {
+            launcherRoot.openWallpaperRequested()
+        } else if (c === ">settings") {
+            if (typeof appLauncherService !== "undefined" && appLauncherService) appLauncherService.requestSettings()
         } else if (c === ">lock") {
             shellController.toggleLock()
-        } else if (c === ">wallpaper") {
-            wallpaperService.nextWallpaper()
         } else if (c === ">folder") {
-            wallpaperService.openFolder()
+            if (typeof wallpaperService !== "undefined" && wallpaperService) wallpaperService.openFolder()
         } else if (c === ">snip") {
-            appLauncherService.launchApp("snippingtool.exe")
+            if (typeof appLauncherService !== "undefined" && appLauncherService) appLauncherService.launchApp("snippingtool.exe")
         }
         launcherRoot.close()
     }

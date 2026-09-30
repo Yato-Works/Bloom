@@ -14,6 +14,7 @@
 #include "NotionService.h"
 #include "AppLauncherService.h"
 #include "CavaService.h"
+#include "LockService.h"
 #include "GlobalHotkeyService.h"
 #include "WorkspaceController.h"
 #include "ShortcutWorkspaceSwitcher.h"
@@ -44,6 +45,7 @@ public:
     [[nodiscard]] NotionService *notionService() noexcept;
     [[nodiscard]] AppLauncherService *appLauncherService() noexcept;
     [[nodiscard]] CavaService *cavaService() noexcept;
+    [[nodiscard]] LockService *lockService() noexcept;
     [[nodiscard]] GlobalHotkeyService *hotkeyService() noexcept;
     [[nodiscard]] ExperimentalWorkspaceSwitcher *experimentalSwitcher() noexcept;
 
@@ -61,6 +63,7 @@ private:
     NotionService m_notionService;
     AppLauncherService m_appLauncherService;
     CavaService m_cavaService;
+    LockService m_lockService;
     GlobalHotkeyService m_hotkeyService;
     WorkspaceController m_workspaceController;
     ShortcutWorkspaceSwitcher m_shortcutSwitcher;

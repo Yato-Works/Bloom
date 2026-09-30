@@ -126,12 +126,4 @@ void OverlayController::showMode(const QString &mode)
         m_window->raise();
         m_window->requestActivate();
     }
-
-    QFile f(QStringLiteral("C:\\Users\\smily\\Bloom\\bloom_debug.log"));
-    if (f.open(QIODevice::Append | QIODevice::Text)) {
-        f.write(QStringLiteral("showMode: mode=%1 visible=%2 window=%3\n")
-                    .arg(m_mode).arg(m_visible).arg(m_window ? "exists" : "null")
-                    .toUtf8());
-        f.close();
-    }
 }

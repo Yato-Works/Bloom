@@ -44,6 +44,9 @@ public:
     Q_INVOKABLE void toggleLock();
     Q_INVOKABLE void disarm();
     Q_INVOKABLE void dismiss();
+    Q_INVOKABLE void triggerLauncher();
+    // Keeps the host window visible while the lock screen overlay is up.
+    Q_INVOKABLE void setLockScreenActive(bool active);
 
     // State-dependent dim opacity:
     // Armed (dim only) = 0.12, Latched (panel open) = 0.18, Locked = 0.22
@@ -68,6 +71,7 @@ signals:
     void lockedChanged();
     void forceArmedChanged();
     void statusTextChanged();
+    void requestShowLauncher();
 
 private:
     void poll();
@@ -95,6 +99,8 @@ private:
     PanelSide m_latchedSide {PanelSide::None};  // Which panel is latched
     bool m_spaceWasPressed {false};
     bool m_chordWasDown {false};
+    bool m_lockScreenActive {false};   // Lock overlay shown - window must stay visible
+    int m_bottomHoverTicks {0};
     QString m_statusText;
 
     // Geometry for leave detection

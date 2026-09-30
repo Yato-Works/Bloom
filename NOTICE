@@ -1,0 +1,11 @@
+Bloom incorporates and adapts QML design and implementation material from
+Caelestia Shell (https://github.com/caelestia-dots/shell).
+
+Copyright (C) Caelestia Shell contributors.
+Caelestia Shell is licensed under the GNU General Public License, version 3.0.
+The Caelestia compatibility layer and all derivative work in this repository
+are therefore distributed under the same GPL-3.0 terms; see LICENSE.
+
+Bloom runs on Windows using Qt Quick rather than Caelestia's Linux/Quickshell
+runtime. The integration adapts the visual language and relevant QML components
+to Bloom's native services; it is not affiliated with or endorsed by Caelestia.

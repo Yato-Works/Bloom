@@ -34,8 +34,15 @@ void ServiceManager::initialize()
     m_shellController.start();
     m_musicControlService.start();
     m_cavaService.start();
+    m_cavaService.setSimulateWhilePlaying(m_musicControlService.isPlaying());
+    m_lockService.start();
 
     m_hotkeyService.start();
+    // Decorative fallback visualiser only while media is actually playing.
+    QObject::connect(&m_musicControlService, &MusicControlService::trackInfoChanged,
+                     &m_cavaService, [this]() {
+        m_cavaService.setSimulateWhilePlaying(m_musicControlService.isPlaying());
+    });
     m_shortcutSwitcher.setHotkeyService(&m_hotkeyService);
     m_shortcutSwitcher.initialize();
     m_experimentalSwitcher.initialize();
@@ -64,6 +71,7 @@ AIService *ServiceManager::aiService() noexcept { return &m_aiService; }
 NotionService *ServiceManager::notionService() noexcept { return &m_notionService; }
 AppLauncherService *ServiceManager::appLauncherService() noexcept { return &m_appLauncherService; }
 CavaService *ServiceManager::cavaService() noexcept { return &m_cavaService; }
+LockService *ServiceManager::lockService() noexcept { return &m_lockService; }
 GlobalHotkeyService *ServiceManager::hotkeyService() noexcept { return &m_hotkeyService; }
 ExperimentalWorkspaceSwitcher *ServiceManager::experimentalSwitcher() noexcept { return &m_experimentalSwitcher; }
 

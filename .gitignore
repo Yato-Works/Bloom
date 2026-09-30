@@ -27,9 +27,22 @@ nul
 Thumbs.db
 .DS_Store
 
+# Reference upstream sources (not part of Bloom repository)
+_ref/
+_reference/
+
+# Temporary / scratch scripts & logs
+insert_msgbox.py
+patch_bootstrap.py
+patch_msgbox.py
+bloom_stdout.log
+bloom_exit.log
+debug_plugins.log
+
 # Junk / stray files (kept on disk, excluded from git)
 {},-,- 
 .tmp.driveupload/
 Bloom_Enhanced_Package*.zip
+# Temporary helper utilities
+assets/fonts/probe_font.*
 qml/com
-

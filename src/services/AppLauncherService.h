@@ -5,6 +5,8 @@
 #include <QVariantList>
 #include <QVariantMap>
 
+#include <QJSEngine>
+
 class AppLauncherService : public QObject
 {
     Q_OBJECT
@@ -34,5 +36,6 @@ signals:
 
 private:
     QVariantList m_apps;
+    QJSEngine m_jsEngine;
     void initSystemApps();
 };

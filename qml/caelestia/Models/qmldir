@@ -1,0 +1,3 @@
+module Caelestia.Models
+depends QtQuick
+depends Caelestia.Config

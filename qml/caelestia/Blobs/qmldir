@@ -1,0 +1,4 @@
+module Caelestia.Blobs
+Blobs 1.0 Blobs
+depends QtQuick
+depends Caelestia.Components
